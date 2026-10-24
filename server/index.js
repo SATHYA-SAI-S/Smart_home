@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 
 const apiKey = process.env.GEMINI_API_KEY?.trim();
-const modelName = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
+const modelName = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash-lite';
 let aiClient = null;
 
 if (apiKey && apiKey.length > 5) {
@@ -239,24 +239,41 @@ Remember:
 - If a command is contradictory or dangerous (e.g. "turn off everything including life-support or fridge", "turn on pool filter with swimmer inside"), mark high risk constraints or ambiguities.
 - Never invent device-specific low-level commands. Derive the high-level intent.`;
 
-    const response = await aiClient.models.generateContent({
-      model: modelName,
-      contents: [
-        { role: 'user', parts: [{ text: `Command: "${prompt}"\nSpeaker: ${speaker}` }] },
-      ],
-      config: {
-        systemInstruction: systemPrompt,
-        responseMimeType: 'application/json',
-        responseSchema: intentSchema,
-        temperature: 0.2,
-      },
-    });
+    const candidateModels = Array.from(new Set([modelName, 'gemini-2.5-flash-lite', 'gemini-1.5-flash']));
+    let lastError = null;
+    let parsedIntent = null;
 
-    const parsedIntent = JSON.parse(response.text);
-    return res.json({
-      fallback: false,
-      intent: parsedIntent,
-    });
+    for (const m of candidateModels) {
+      try {
+        const response = await aiClient.models.generateContent({
+          model: m,
+          contents: [
+            { role: 'user', parts: [{ text: `Command: "${prompt}"\nSpeaker: ${speaker}` }] },
+          ],
+          config: {
+            systemInstruction: systemPrompt,
+            responseMimeType: 'application/json',
+            responseSchema: intentSchema,
+            temperature: 0.2,
+          },
+        });
+
+        parsedIntent = JSON.parse(response.text);
+        if (parsedIntent) break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`[SentinelServer] Model ${m} failed (${err.message}). Trying next candidate...`);
+      }
+    }
+
+    if (parsedIntent) {
+      return res.json({
+        fallback: false,
+        intent: parsedIntent,
+      });
+    }
+
+    throw lastError || new Error('All candidate models failed');
   } catch (error) {
     console.error('[SentinelServer] Gemini interpretation error:', error);
     return res.json({
