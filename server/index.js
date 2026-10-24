@@ -12,12 +12,13 @@ app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
 const apiKey = process.env.GEMINI_API_KEY?.trim();
+const modelName = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
 let aiClient = null;
 
 if (apiKey && apiKey.length > 5) {
   try {
     aiClient = new GoogleGenAI({ apiKey });
-    console.log('[SentinelServer] Gemini client initialized successfully with API key.');
+    console.log(`[SentinelServer] Gemini client initialized with model: ${modelName}`);
   } catch (err) {
     console.warn('[SentinelServer] Failed to initialize GoogleGenAI:', err.message);
   }
@@ -110,7 +111,7 @@ Remember:
 - Never invent device-specific low-level commands. Derive the high-level intent.`;
 
     const response = await aiClient.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: modelName,
       contents: [
         { role: 'user', parts: [{ text: `Command: "${prompt}"\nSpeaker: ${speaker}` }] },
       ],

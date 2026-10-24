@@ -194,7 +194,7 @@ export class Interpreter {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success !== false && data.intent) {
+        if (data.success !== false && data.intent && !data.fallback) {
           return data.intent;
         }
       }
