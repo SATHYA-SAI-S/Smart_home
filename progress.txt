@@ -1,0 +1,4 @@
+[INIT] Phase 2 Voice Pipeline Troubleshooting
+- Root cause identified: regex failed to strip `;codecs=opus` resulting in corrupted WebM EBML header and ffmpeg demux failure.
+- Status: Architecture, GSD roadmap, and CodeRabbit review prepared.
+- Completed REQ-2: Implemented multi-format audio decoding for webm (with codecs=opus), mp4, ogg, and wav in ChatTab and server/index.js. Verified with build and test suite.

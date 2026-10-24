@@ -30,6 +30,7 @@ export const ChatTab: React.FC = () => {
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
+  const interimTranscriptRef = useRef<string>('');
 
   const messages = useAgentStore((state) => state.messages);
   const currentSpeaker = useAgentStore((state) => state.currentSpeaker);
@@ -68,14 +69,19 @@ export const ChatTab: React.FC = () => {
   const startRecording = async () => {
     try {
       setVoiceStatus('Accessing microphone...');
+      interimTranscriptRef.current = '';
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : MediaRecorder.isTypeSupported('audio/webm')
-        ? 'audio/webm'
-        : '';
+      const candidateMimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+        'audio/ogg',
+        'audio/wav',
+      ];
+      const mimeType = candidateMimeTypes.find((type) => MediaRecorder.isTypeSupported(type)) || '';
 
       const mediaRecorder = mimeType
         ? new MediaRecorder(stream, { mimeType })
@@ -108,6 +114,7 @@ export const ChatTab: React.FC = () => {
               .map((r: any) => r[0].transcript)
               .join('');
             if (transcript) {
+              interimTranscriptRef.current = transcript.trim();
               setInputText(transcript);
             }
           };
@@ -156,6 +163,14 @@ export const ChatTab: React.FC = () => {
           type: mediaRecorder.mimeType || 'audio/webm',
         });
 
+        // Guard against micro-clicks / empty recordings
+        if (audioBlob.size < 400 && !interimTranscriptRef.current) {
+          setIsTranscribing(false);
+          setVoiceStatus('Audio was too short. Speak and click mic to transcribe.');
+          setTimeout(() => setVoiceStatus(null), 3000);
+          return;
+        }
+
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = async () => {
@@ -165,7 +180,10 @@ export const ChatTab: React.FC = () => {
             const res = await fetch('/api/voice/transcribe', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ audio: base64Data }),
+              body: JSON.stringify({
+                audio: base64Data,
+                mimeType: audioBlob.type || mediaRecorder.mimeType,
+              }),
             });
 
             const data = await res.json();
@@ -178,15 +196,31 @@ export const ChatTab: React.FC = () => {
               setTimeout(() => setVoiceStatus(null), 3500);
               // Forward transcribed speech directly into Gemini pipeline
               await handleSend(transcribedText);
+            } else if (interimTranscriptRef.current) {
+              // Resilient fallback to real-time speech recognizer
+              const fallbackText = interimTranscriptRef.current;
+              console.log('Using real-time speech fallback:', fallbackText);
+              setInputText(fallbackText);
+              setVoiceStatus(`Heard: "${fallbackText}"`);
+              setTimeout(() => setVoiceStatus(null), 3500);
+              await handleSend(fallbackText);
             } else {
-              setVoiceStatus(data.error || 'No speech detected. Please try again.');
+              setVoiceStatus(data.error || 'No speech detected. Please speak clearly.');
               setTimeout(() => setVoiceStatus(null), 3500);
             }
           } catch (fetchErr: any) {
             console.error('Transcription request failed:', fetchErr);
             setIsTranscribing(false);
-            setVoiceStatus('Whisper transcription error. Check backend server.');
-            setTimeout(() => setVoiceStatus(null), 3500);
+            if (interimTranscriptRef.current) {
+              const fallbackText = interimTranscriptRef.current;
+              setInputText(fallbackText);
+              setVoiceStatus(`Heard: "${fallbackText}"`);
+              setTimeout(() => setVoiceStatus(null), 3500);
+              await handleSend(fallbackText);
+            } else {
+              setVoiceStatus('Whisper server error. Please try again.');
+              setTimeout(() => setVoiceStatus(null), 3500);
+            }
           }
         };
       } catch (procErr: any) {

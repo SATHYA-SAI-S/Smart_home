@@ -45,16 +45,41 @@ app.get('/api/health', (req, res) => {
 
 // Speech-to-Text Transcription via Open-Source Whisper
 app.post('/api/voice/transcribe', async (req, res) => {
-  const { audio } = req.body;
+  const { audio, mimeType } = req.body;
 
-  if (!audio) {
-    return res.status(400).json({ error: 'Missing audio data in request body.' });
+  if (!audio || typeof audio !== 'string') {
+    return res.status(400).json({ error: 'Missing or invalid audio data in request body.' });
   }
 
-  // Clean base64 header if present
-  const base64Data = audio.replace(/^data:audio\/\w+;base64,/, '');
+  // Determine file extension from explicit MIME type or data URI header
+  let ext = '.webm';
+  const detectedMime = (
+    mimeType ||
+    (audio.match(/^data:audio\/([a-zA-Z0-9_.-]+)/)?.[1]) ||
+    ''
+  ).toLowerCase();
+
+  if (detectedMime.includes('mp4') || detectedMime.includes('m4a') || detectedMime.includes('aac')) {
+    ext = '.mp4';
+  } else if (detectedMime.includes('ogg')) {
+    ext = '.ogg';
+  } else if (detectedMime.includes('wav') || detectedMime.includes('x-wav')) {
+    ext = '.wav';
+  } else {
+    ext = '.webm';
+  }
+
+  // Robust base64 stripping (handles any codec params like data:audio/webm;codecs=opus;base64,...)
+  const base64Data = audio.includes(',') ? audio.split(',')[1] : audio;
   const buffer = Buffer.from(base64Data, 'base64');
-  const tempFilePath = path.join(os.tmpdir(), `sentinel_voice_${Date.now()}.webm`);
+
+  if (buffer.length < 512) {
+    return res.status(400).json({
+      error: 'Audio recording was too short or empty. Please speak your command clearly.',
+    });
+  }
+
+  const tempFilePath = path.join(os.tmpdir(), `sentinel_voice_${Date.now()}${ext}`);
 
   try {
     await fs.promises.writeFile(tempFilePath, buffer);
@@ -82,33 +107,39 @@ app.post('/api/voice/transcribe', async (req, res) => {
         console.warn('[SentinelServer] Failed to clean temp voice file:', err.message);
       }
 
-      if (code !== 0) {
-        console.error('[SentinelServer] Whisper transcription failed:', stderrData);
+      // First check if stdout has a valid JSON error or result
+      let parsed = null;
+      try {
+        if (stdoutData.trim()) {
+          parsed = JSON.parse(stdoutData.trim());
+        }
+      } catch (parseErr) {
+        // Not valid JSON
+      }
+
+      if (code !== 0 || (parsed && parsed.error)) {
+        const errorMsg = (parsed && parsed.error) || stderrData.trim() || 'Whisper transcription failed';
+        console.error(`[SentinelServer] Whisper transcription failed (code ${code}):`, errorMsg);
         return res.status(500).json({
-          error: 'Whisper transcription failed',
-          details: stderrData,
+          error: errorMsg,
+          details: stderrData.trim(),
         });
       }
 
-      try {
-        const parsed = JSON.parse(stdoutData.trim());
-        if (parsed.error) {
-          return res.status(500).json({ error: parsed.error });
-        }
+      if (parsed) {
         console.log(`[SentinelServer] Whisper Transcribed: "${parsed.text}" (lang: ${parsed.language})`);
         return res.json({
           success: true,
-          text: parsed.text,
-          language: parsed.language,
+          text: parsed.text || '',
+          language: parsed.language || 'en',
           model: 'openai-whisper-base',
         });
-      } catch (err) {
-        console.error('[SentinelServer] Failed to parse Whisper output:', stdoutData);
-        return res.status(500).json({
-          error: 'Invalid Whisper output format',
-          raw: stdoutData,
-        });
       }
+
+      return res.status(500).json({
+        error: 'Invalid Whisper output format',
+        raw: stdoutData,
+      });
     });
   } catch (err) {
     console.error('[SentinelServer] Error handling voice upload:', err);
