@@ -7,6 +7,7 @@ import { PolicyEngine } from './PolicyEngine';
 import { Recommender } from './Recommender';
 import { Executor } from './Executor';
 import { CommitGuard } from './CommitGuard';
+import { DamageModel } from './DamageModel';
 import { StageStatus, CommitResult } from '../types/agent';
 
 export class AgentOrchestrator {
@@ -140,6 +141,19 @@ export class AgentOrchestrator {
 
       agentStore.updateMessageRecommendation(agentMsgId, recommendation, findings);
       agentStore.updateStage(3, 'done', recommendation.summaryExplanation);
+
+      // -----------------------------------------------------------------
+      // C3: COMPUTE MODEL-BASED PROBABILITIES OF DAMAGE & MONTE CARLO
+      // -----------------------------------------------------------------
+      const literalFindings = PolicyEngine.evaluateSoftRisks(rawPlan, simulation.diff, agentStore.rules, {
+        devices: worldStore.devices,
+        doors: worldStore.doors,
+        people: worldStore.people,
+        timeOfDay: worldStore.timeOfDay,
+      });
+      const literalDamageReport = DamageModel.assessDamage(literalFindings, worldStore.people, 1.0);
+      const safeDamageReport = DamageModel.assessDamage(findings, worldStore.people, 1.0);
+      agentStore.setDamageReport(safeDamageReport, literalDamageReport);
 
       // -----------------------------------------------------------------
       // C1: GENERATE STATE-AWARE PREVIEW TOKEN (Read-only, no mutations)

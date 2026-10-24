@@ -26,6 +26,8 @@ export const PlanTab: React.FC = () => {
   const timeSimulation = useAgentStore((state) => state.timeSimulation);
   const selectedTimelineMinutes = useAgentStore((state) => state.selectedTimelineMinutes);
   const setSelectedTimelineMinutes = useAgentStore((state) => state.setSelectedTimelineMinutes);
+  const damageReport = useAgentStore((state) => state.damageReport);
+  const literalDamageReport = useAgentStore((state) => state.literalDamageReport);
 
   const [planView, setPlanView] = React.useState<'safe' | 'literal'>('safe');
   const toggleStepApproval = useAgentStore((state) => state.toggleStepApproval);
@@ -200,6 +202,59 @@ export const PlanTab: React.FC = () => {
             <span>Literal (Naive Baseline)</span>
           </button>
         </div>
+
+        {/* C3: MODEL-BASED PROBABILITY OF DAMAGE CARD */}
+        {(damageReport || literalDamageReport) && (
+          <div className="p-3 bg-slate-900/60 rounded-xl border border-white/10 mb-3 shadow">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="font-bold text-amber-400 uppercase tracking-wider text-[10px] flex items-center space-x-1">
+                <Gauge size={12} className="text-amber-400" />
+                <span>Damage Probability Analysis</span>
+              </span>
+              <span className="text-[9px] text-slate-400 font-mono">
+                {damageReport?.monteCarlo.samples ?? 500} MC Runs
+              </span>
+            </div>
+
+            {/* Before vs After Repair Comparison */}
+            <div className="grid grid-cols-2 gap-2 mb-2 text-[10px] font-mono">
+              <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                <div className="text-[9px] text-rose-300 font-bold uppercase">Literal Plan</div>
+                <div className="text-xs font-bold text-white mt-0.5">
+                  {((literalDamageReport?.nominalProbabilityAnyHarm ?? 0) * 100).toFixed(1)}%
+                </div>
+                <div className="text-[9px] text-slate-400 mt-0.5">
+                  Exp Harm: {literalDamageReport?.totalExpectedHarm.toFixed(2) ?? '0.00'}
+                </div>
+              </div>
+
+              <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <div className="text-[9px] text-emerald-300 font-bold uppercase">Safe Plan (Repaired)</div>
+                <div className="text-xs font-bold text-emerald-400 mt-0.5">
+                  {((damageReport?.nominalProbabilityAnyHarm ?? 0) * 100).toFixed(1)}%
+                </div>
+                <div className="text-[9px] text-slate-400 mt-0.5">
+                  Exp Harm: {damageReport?.totalExpectedHarm.toFixed(2) ?? '0.00'}
+                </div>
+              </div>
+            </div>
+
+            {/* Monte Carlo 90% Uncertainty Interval */}
+            {damageReport && (
+              <div className="text-[9px] text-slate-400 font-mono flex items-center justify-between px-1">
+                <span>90% Uncertainty Interval:</span>
+                <span className="text-sky-300 font-bold">
+                  [{((damageReport.monteCarlo.ci90Lower) * 100).toFixed(1)}% – {((damageReport.monteCarlo.ci90Upper) * 100).toFixed(1)}%]
+                </span>
+              </div>
+            )}
+
+            {/* Mandatory Disclaimer */}
+            <div className="mt-1.5 pt-1 border-t border-white/5 text-[8px] text-slate-500 italic text-center">
+              model-based estimate, not empirically calibrated
+            </div>
+          </div>
+        )}
 
         {/* INTENT & CONFIDENCE SUMMARY */}
         {currentIntent && (

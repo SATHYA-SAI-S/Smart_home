@@ -12,7 +12,8 @@ import {
   PlanRecommendation,
   PreviewToken,
   StateDriftDiff,
-  TimeSimulationResult
+  TimeSimulationResult,
+  DamageReport
 } from '../types/agent';
 import { INITIAL_RULES } from '../data/initialWorld';
 
@@ -51,6 +52,10 @@ interface AgentStoreState {
   // C2 Time-aware Simulation & Timeline
   timeSimulation: TimeSimulationResult | null;
   selectedTimelineMinutes: number;
+
+  // C3 Probability of Damage
+  damageReport: DamageReport | null;
+  literalDamageReport: DamageReport | null;
   
   // Rules and preferences
   rules: DeclarativeRule[];
@@ -81,6 +86,8 @@ interface AgentStoreState {
 
   setTimeSimulation: (res: TimeSimulationResult | null) => void;
   setSelectedTimelineMinutes: (min: number) => void;
+
+  setDamageReport: (report: DamageReport | null, literalReport?: DamageReport | null) => void;
 
   // Rules actions
   toggleRule: (ruleId: string) => void;
@@ -132,6 +139,9 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
 
   timeSimulation: null,
   selectedTimelineMinutes: 0,
+
+  damageReport: null,
+  literalDamageReport: null,
 
   rules: INITIAL_RULES,
   preferences: [
@@ -292,6 +302,9 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
   setTimeSimulation: (res) => set({ timeSimulation: res }),
   setSelectedTimelineMinutes: (min) => set({ selectedTimelineMinutes: min }),
 
+  setDamageReport: (report, literalReport = null) =>
+    set({ damageReport: report, literalDamageReport: literalReport }),
+
   clearPipeline: () => {
     set({
       currentIntent: null,
@@ -303,6 +316,8 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
       driftDiff: null,
       timeSimulation: null,
       selectedTimelineMinutes: 0,
+      damageReport: null,
+      literalDamageReport: null,
       stageStatuses: DEFAULT_STAGES,
       isProcessing: false,
     });

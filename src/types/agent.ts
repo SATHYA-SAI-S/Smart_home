@@ -215,3 +215,28 @@ export interface TimeSimulationResult {
   thresholdCrossings: ThresholdCrossing[];
   timeOnlyCatches: string[];
 }
+
+export interface HazardProbability {
+  hazardId: string;
+  title: string;
+  severity: string;
+  severityWeight: number;
+  nominalProbability: number;
+  expectedHarm: number;
+  exposureHours: number;
+}
+
+export interface DamageReport {
+  hazardProbabilities: HazardProbability[];
+  nominalProbabilityAnyHarm: number;
+  totalExpectedHarm: number;
+  monteCarlo: {
+    samples: number;
+    seed: number;
+    mean: number;
+    ci90Lower: number;
+    ci90Upper: number;
+  };
+  disclaimer: 'model-based estimate, not empirically calibrated';
+}
+
