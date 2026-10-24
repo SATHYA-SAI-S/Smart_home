@@ -6,7 +6,8 @@ import { Simulator } from './Simulator';
 import { PolicyEngine } from './PolicyEngine';
 import { Recommender } from './Recommender';
 import { Executor } from './Executor';
-import { StageStatus } from '../types/agent';
+import { CommitGuard } from './CommitGuard';
+import { StageStatus, CommitResult } from '../types/agent';
 
 export class AgentOrchestrator {
   /**
@@ -123,6 +124,18 @@ export class AgentOrchestrator {
       agentStore.updateMessageRecommendation(agentMsgId, recommendation, findings);
       agentStore.updateStage(3, 'done', recommendation.summaryExplanation);
 
+      // -----------------------------------------------------------------
+      // C1: GENERATE STATE-AWARE PREVIEW TOKEN (Read-only, no mutations)
+      // -----------------------------------------------------------------
+      const token = CommitGuard.createToken(recommendation.primaryPlan, {
+        devices: worldStore.devices,
+        doors: worldStore.doors,
+        people: worldStore.people,
+        rooms: worldStore.rooms,
+      });
+      agentStore.setActiveToken(token);
+      agentStore.clearDrift();
+
       // Automatically switch to Plan Tab so user can review the generated plan
       if (recommendation.primaryPlan && recommendation.primaryPlan.length > 0) {
         agentStore.setActiveTab('plan');
@@ -164,28 +177,36 @@ export class AgentOrchestrator {
       agentStore.updateStage(4, 'done', 'Auto-approved under current autonomy policy.');
 
       // -----------------------------------------------------------------
-      // STAGE 6: EXECUTE & VERIFY
+      // STAGE 6: EXECUTE & VERIFY THROUGH COMMITGUARD
       // -----------------------------------------------------------------
-      agentStore.updateStage(5, 'running', 'Executing device transitions with telemetry readback...');
-      const execResult = await Executor.execute(
+      agentStore.updateStage(5, 'running', 'Verifying token & executing device transitions...');
+      const commitResult = await CommitGuard.commit(
+        token,
         recommendation.primaryPlan,
         intent,
         simulation.diff,
         findings,
+        {
+          devices: worldStore.devices,
+          doors: worldStore.doors,
+          people: worldStore.people,
+          rooms: worldStore.rooms,
+        },
         speaker.name
       );
 
-      if (execResult.success) {
+      if (commitResult.status === 'COMMITTED' && commitResult.success) {
         agentStore.updateStage(
           5,
           'done',
-          `Verified: ${execResult.executedSteps.length} step(s) applied with 0 mismatches.`
+          `Verified: ${commitResult.executedSteps?.length || 0} step(s) applied with 0 mismatches.`
         );
+        agentStore.setActiveToken(null);
       } else {
         agentStore.updateStage(
           5,
           'error',
-          `Verification issues: ${execResult.mismatches.join('; ')}`
+          `Execution issue (${commitResult.status}): ${commitResult.message}`
         );
       }
 
@@ -201,11 +222,13 @@ export class AgentOrchestrator {
   }
 
   /**
-   * Executes currently approved steps in Plan Tab
+   * Executes currently approved steps in Plan Tab through the enforced CommitGuard boundary.
    */
-  static async executeCurrentPlan(): Promise<void> {
+  static async executeCurrentPlan(): Promise<CommitResult> {
     const agentStore = useAgentStore.getState();
+    const worldStore = useWorldStore.getState();
     const plan = agentStore.currentPlan;
+    const token = agentStore.activeToken;
     const intent = agentStore.currentIntent || {
       goal: 'manual_plan_execution',
       scope: 'all',
@@ -216,31 +239,90 @@ export class AgentOrchestrator {
       ambiguities: [],
     };
 
-    agentStore.updateStage(4, 'done', 'Approved by user.');
-    agentStore.updateStage(5, 'running', 'Executing approved steps...');
+    agentStore.updateStage(4, 'running', 'Verifying preview token & relevant world state integrity...');
 
-    const result = await Executor.execute(
+    const commitResult = await CommitGuard.commit(
+      token,
       plan,
       intent,
       agentStore.currentDiff,
       agentStore.currentFindings,
+      {
+        devices: worldStore.devices,
+        doors: worldStore.doors,
+        people: worldStore.people,
+        rooms: worldStore.rooms,
+      },
       agentStore.currentSpeaker
     );
 
-    if (result.success) {
+    if (commitResult.status === 'DRIFTED') {
+      agentStore.setDriftDiff(commitResult.driftDiff || null);
+      if (commitResult.newToken) {
+        agentStore.setActiveToken(commitResult.newToken);
+      }
+      agentStore.updateStage(
+        4,
+        'blocked',
+        `DRIFT DETECTED: World state changed during review (${commitResult.driftDiff?.length} diffs). Review banner and re-approve.`
+      );
+      agentStore.addMessage({
+        sender: 'system',
+        text: `⚠️ State Drift Detected: ${commitResult.message} Please review the state differences in the Plan Tab and re-approve.`,
+        isComplete: true,
+      });
+      return commitResult;
+    }
+
+    if (commitResult.status === 'EXPIRED') {
+      const newToken = CommitGuard.createToken(plan, {
+        devices: worldStore.devices,
+        doors: worldStore.doors,
+        people: worldStore.people,
+        rooms: worldStore.rooms,
+      });
+      agentStore.setActiveToken(newToken);
+      agentStore.updateStage(
+        4,
+        'blocked',
+        `Preview token expired. Fresh token generated. Please re-confirm execution.`
+      );
+      agentStore.addMessage({
+        sender: 'system',
+        text: `⏳ Approval Token Expired: The preview window elapsed. A fresh token was generated for re-approval.`,
+        isComplete: true,
+      });
+      return commitResult;
+    }
+
+    if (commitResult.status === 'BLOCKED_INVARIANT') {
+      agentStore.updateStage(5, 'blocked', commitResult.message);
+      agentStore.addMessage({
+        sender: 'agent',
+        text: `❌ Actuation Aborted: ${commitResult.message}`,
+        isComplete: true,
+      });
+      return commitResult;
+    }
+
+    if (commitResult.status === 'COMMITTED' && commitResult.success) {
+      agentStore.updateStage(4, 'done', 'Approved & Committed.');
       agentStore.updateStage(
         5,
         'done',
-        `Success: ${result.executedSteps.length} step(s) verified in 3D home.`
+        `Success: ${commitResult.executedSteps?.length || 0} step(s) verified in 3D home.`
       );
-    } else {
-      agentStore.updateStage(5, 'error', `Telemetry error: ${result.mismatches.join(', ')}`);
+      agentStore.clearDrift();
+      agentStore.setActiveToken(null);
+      agentStore.addMessage({
+        sender: 'agent',
+        text: `Plan executed: ${commitResult.executedSteps?.length || 0} devices updated and verified in 3D simulator.`,
+        isComplete: true,
+      });
+      return commitResult;
     }
 
-    agentStore.addMessage({
-      sender: 'agent',
-      text: `Plan executed: ${result.executedSteps.length} devices updated and verified in 3D simulator.`,
-      isComplete: true,
-    });
+    agentStore.updateStage(5, 'error', commitResult.message);
+    return commitResult;
   }
 }

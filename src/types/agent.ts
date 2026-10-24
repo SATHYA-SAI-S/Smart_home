@@ -146,3 +146,43 @@ export interface LearnedPreference {
   proposedRule: DeclarativeRule;
   status: 'pending' | 'accepted' | 'dismissed';
 }
+
+export interface PreviewToken {
+  id: string;
+  planHash: string;
+  stateHash: string;
+  relevantDeviceIds: string[];
+  relevantRooms: string[];
+  createdAt: number;
+  expiresAt: number;
+  signature?: string;
+}
+
+export interface StateDriftDiff {
+  entityType: 'room_occupancy' | 'device_state' | 'door_state';
+  entityId: string;
+  entityName: string;
+  property: string;
+  previewValue: any;
+  currentValue: any;
+  explanation: string;
+}
+
+export type CommitStatus = 'COMMITTED' | 'DRIFTED' | 'EXPIRED' | 'INVALID_TOKEN' | 'BLOCKED_INVARIANT';
+
+export interface CommitResult {
+  status: CommitStatus;
+  success: boolean;
+  executedSteps?: PlanStep[];
+  driftDiff?: StateDriftDiff[];
+  message: string;
+  newToken?: PreviewToken;
+}
+
+export interface PreviewResult {
+  plan: PlanStep[];
+  diff: SimulationDiffItem[];
+  findings: RiskFinding[];
+  token: PreviewToken;
+  intent: Intent;
+}

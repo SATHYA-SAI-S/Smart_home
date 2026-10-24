@@ -9,7 +9,9 @@ import {
   StageStatus, 
   DeclarativeRule, 
   LearnedPreference,
-  PlanRecommendation
+  PlanRecommendation,
+  PreviewToken,
+  StateDriftDiff
 } from '../types/agent';
 import { INITIAL_RULES } from '../data/initialWorld';
 
@@ -30,7 +32,7 @@ interface AgentStoreState {
   currentInput: string;
   currentSpeaker: string;
   autonomyLevel: AutonomyLevel;
-  activeTab: 'chat' | 'plan' | 'world' | 'rules' | 'audit';
+  activeTab: 'chat' | 'plan' | 'world' | 'rules' | 'audit' | 'eval';
   
   // Pipeline live state
   currentIntent: Intent | null;
@@ -40,6 +42,10 @@ interface AgentStoreState {
   currentRecommendation: PlanRecommendation | null;
   stageStatuses: StageStatus[];
   isProcessing: boolean;
+
+  // C1 State-aware Preview/Commit Token and Drift
+  activeToken: PreviewToken | null;
+  driftDiff: StateDriftDiff[] | null;
   
   // Rules and preferences
   rules: DeclarativeRule[];
@@ -51,7 +57,7 @@ interface AgentStoreState {
   setInput: (input: string) => void;
   setSpeaker: (speaker: string) => void;
   setAutonomyLevel: (level: AutonomyLevel) => void;
-  setActiveTab: (tab: 'chat' | 'plan' | 'world' | 'rules' | 'audit') => void;
+  setActiveTab: (tab: 'chat' | 'plan' | 'world' | 'rules' | 'audit' | 'eval') => void;
   
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => string;
   updateMessageStages: (messageId: string, stages: StageStatus[], isComplete?: boolean) => void;
@@ -64,6 +70,10 @@ interface AgentStoreState {
   approveAllSteps: () => void;
   rejectAllSteps: () => void;
   
+  setActiveToken: (token: PreviewToken | null) => void;
+  setDriftDiff: (diffs: StateDriftDiff[] | null) => void;
+  clearDrift: () => void;
+
   // Rules actions
   toggleRule: (ruleId: string) => void;
   updateRuleSeverity: (ruleId: string, severity: any) => void;
@@ -108,6 +118,9 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
   currentRecommendation: null,
   stageStatuses: DEFAULT_STAGES,
   isProcessing: false,
+
+  activeToken: null,
+  driftDiff: null,
 
   rules: INITIAL_RULES,
   preferences: [
@@ -261,6 +274,10 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
     return latest;
   },
 
+  setActiveToken: (token) => set({ activeToken: token }),
+  setDriftDiff: (diffs) => set({ driftDiff: diffs }),
+  clearDrift: () => set({ driftDiff: null }),
+
   clearPipeline: () => {
     set({
       currentIntent: null,
@@ -268,6 +285,8 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
       currentDiff: [],
       currentFindings: [],
       currentRecommendation: null,
+      activeToken: null,
+      driftDiff: null,
       stageStatuses: DEFAULT_STAGES,
       isProcessing: false,
     });

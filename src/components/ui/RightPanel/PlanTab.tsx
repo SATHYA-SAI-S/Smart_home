@@ -16,6 +16,9 @@ export const PlanTab: React.FC = () => {
   const currentPlan = useAgentStore((state) => state.currentPlan);
   const currentIntent = useAgentStore((state) => state.currentIntent);
   const currentRecommendation = useAgentStore((state) => state.currentRecommendation);
+  const activeToken = useAgentStore((state) => state.activeToken);
+  const driftDiff = useAgentStore((state) => state.driftDiff);
+  const clearDrift = useAgentStore((state) => state.clearDrift);
   const toggleStepApproval = useAgentStore((state) => state.toggleStepApproval);
   const approveAllSteps = useAgentStore((state) => state.approveAllSteps);
   const rejectAllSteps = useAgentStore((state) => state.rejectAllSteps);
@@ -42,6 +45,51 @@ export const PlanTab: React.FC = () => {
   return (
     <div className="flex flex-col h-full justify-between overflow-y-auto pr-1">
       <div>
+        {/* DYNAMIC STATE DRIFT NOTIFICATION BANNER */}
+        {driftDiff && driftDiff.length > 0 && (
+          <div className="p-3 mb-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 shadow-lg">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center space-x-1.5 font-bold text-xs text-amber-300">
+                <AlertTriangle size={15} className="shrink-0 text-amber-400" />
+                <span>State Drift Detected Prior to Commit</span>
+              </div>
+              <button
+                onClick={clearDrift}
+                className="text-[10px] text-amber-400 hover:text-white underline font-medium"
+              >
+                Dismiss
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
+              The home's occupancy or device state shifted after this preview was issued. 
+              A fresh token has been minted. Review the computed differences below:
+            </p>
+            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+              {driftDiff.map((d, idx) => (
+                <div key={idx} className="p-2 rounded-lg bg-black/40 border border-white/5 text-[10px] font-mono">
+                  <div className="text-amber-300 font-semibold">{d.explanation}</div>
+                  <div className="text-slate-400 mt-0.5 flex items-center justify-between text-[9px]">
+                    <span>Before: <span className="text-rose-300">{JSON.stringify(d.previewValue)}</span></span>
+                    <span>&rarr;</span>
+                    <span>Now: <span className="text-emerald-300">{JSON.stringify(d.currentValue)}</span></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TOKEN SECURITY INDICATOR */}
+        {activeToken && (
+          <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono px-1 py-1 mb-2 bg-slate-900/40 rounded-lg border border-white/5">
+            <span className="flex items-center space-x-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-slate-300">Token: {activeToken.id.substring(0, 15)}...</span>
+            </span>
+            <span className="text-sky-400">Guarded Actuation Active</span>
+          </div>
+        )}
+
         {/* INTENT & CONFIDENCE SUMMARY */}
         {currentIntent && (
           <div className="p-3 bg-slate-900/60 rounded-xl border border-white/5 mb-3">
