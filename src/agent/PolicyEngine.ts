@@ -34,33 +34,6 @@ export class PolicyEngine {
       },
     },
     {
-      id: 'invariant_anti_entrapment',
-      name: 'Anti-Entrapment Occupancy Safety',
-      description: 'Doors cannot be locked from outside if people are present in that room.',
-      check: (_, step, world) => {
-        if (step.targetState.locked !== true) return { violated: false };
-
-        const mappedDoor = world.doors.find(
-          (door: DoorEntity) => door.lockDeviceId === step.deviceId || door.id === step.deviceId
-        );
-        if (!mappedDoor) return { violated: false };
-
-        // Check occupants in toRoom and fromRoom
-        const trappedPeople = world.people.filter(
-          (p: PersonEntity) => p.currentRoom === mappedDoor.toRoom
-        );
-
-        if (trappedPeople.length > 0) {
-          const names = trappedPeople.map((p: PersonEntity) => p.name).join(', ');
-          return {
-            violated: true,
-            reason: `INVARIANT VIOLATION: Cannot lock door "${mappedDoor.name}". Occupant(s) [${names}] are inside room "${mappedDoor.toRoom}".`,
-          };
-        }
-        return { violated: false };
-      },
-    },
-    {
       id: 'invariant_no_lock_ajar',
       name: 'Prohibit Locking Open Portal Mechanism',
       description: 'Deadbolt cannot engage while door leaf is physically opened.',
@@ -76,6 +49,33 @@ export class PolicyEngine {
           return {
             violated: true,
             reason: `INVARIANT VIOLATION: Cannot lock door "${mappedDoor.name}" because the door is currently open. It must be closed first.`,
+          };
+        }
+        return { violated: false };
+      },
+    },
+    {
+      id: 'invariant_anti_entrapment',
+      name: 'Anti-Entrapment Occupancy Safety',
+      description: 'Doors cannot be locked from outside if people are present in that room.',
+      check: (_, step, world) => {
+        if (step.targetState.locked !== true) return { violated: false };
+
+        const mappedDoor = world.doors.find(
+          (door: DoorEntity) => door.lockDeviceId === step.deviceId || door.id === step.deviceId
+        );
+        if (!mappedDoor) return { violated: false };
+
+        // Check occupants in toRoom
+        const trappedPeople = world.people.filter(
+          (p: PersonEntity) => p.currentRoom === mappedDoor.toRoom
+        );
+
+        if (trappedPeople.length > 0) {
+          const names = trappedPeople.map((p: PersonEntity) => p.name).join(', ');
+          return {
+            violated: true,
+            reason: `INVARIANT VIOLATION: Cannot lock door "${mappedDoor.name}". Occupant(s) [${names}] are inside room "${mappedDoor.toRoom}".`,
           };
         }
         return { violated: false };

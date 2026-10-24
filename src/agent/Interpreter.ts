@@ -50,9 +50,10 @@ export class OfflineInterpreter {
       }
     }
 
-    // 1. Leaving Home / Out / Departure
+    // 1. Leaving Home / Out / Departure (with typo tolerance)
     if (
-      clean.match(/\b(leav(e|ing)|step(ping)? out|goodbye|bye|going out|away|vacation|depart)\b/)
+      clean.match(/\b(leav(e|ing)?|leva(e|ing)?|step(ping)? out|goodbye|bye|going out|away|vacation|depart)\b/) ||
+      (clean.includes('hoem') && (clean.includes('shudown') || clean.includes('plez') || clean.includes('leva')))
     ) {
       goal = 'leave_home';
       scope = 'all';
@@ -131,6 +132,14 @@ export class OfflineInterpreter {
       goal = 'turn_on_devices';
       scope = targetRoom || 'all';
       confidence = 0.85;
+
+      const words = clean.split(/\s+/);
+      const knownDeviceWords = ['light', 'lights', 'fan', 'fans', 'ac', 'tv', 'stove', 'heater', 'camera', 'fridge', 'plug', 'gate', 'door', 'all'];
+      const hasKnownDevice = words.some((w) => knownDeviceWords.includes(w)) || targetRoom !== null;
+      if (!hasKnownDevice) {
+        confidence = 0.6;
+        ambiguities.push(`Command "${raw}" mentions an unrecognized appliance or unknown device type.`);
+      }
     }
     // 10. Direct Lock / Unlock
     else if (clean.match(/\b(lock|unlock)\b/)) {
