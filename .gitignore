@@ -4,4 +4,7 @@ dist/
 .env.local
 *.log
 *.zip
+*.doc
+*.docx
+~$*
 .DS_Store

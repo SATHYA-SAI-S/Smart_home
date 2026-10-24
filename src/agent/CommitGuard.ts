@@ -456,7 +456,9 @@ export class CommitGuard {
     }
 
     // 7. Re-verify Hard Safety Invariants at Actuation Boundary (Requirement E1)
-    const { violations } = PolicyEngine.evaluateInvariants(plan, world);
+    // Only steps that are approved and not marked as blocked are evaluated for actuation
+    const stepsToActuate = plan.filter((s) => s.approved && !s.isBlockedByInvariant);
+    const { violations } = PolicyEngine.evaluateInvariants(stepsToActuate, world);
     if (violations.length > 0) {
       const violationMsg = `Actuation aborted: Hard safety invariant violated at commit boundary: ${violations.join('; ')}`;
       console.error(`[CommitGuard] ${violationMsg}`);

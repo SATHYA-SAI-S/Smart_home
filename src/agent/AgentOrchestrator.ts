@@ -8,6 +8,7 @@ import { Recommender } from './Recommender';
 import { Executor } from './Executor';
 import { CommitGuard } from './CommitGuard';
 import { DamageModel } from './DamageModel';
+import { AdversarialValidator } from './AdversarialValidator';
 import { StageStatus, CommitResult } from '../types/agent';
 
 export class AgentOrchestrator {
@@ -71,8 +72,16 @@ export class AgentOrchestrator {
         people: worldStore.people,
       });
 
-      const simulation = Simulator.simulate(
+      // C4: Adversarial & Schema Validation Layer
+      const validation = AdversarialValidator.validate(
         rawPlan,
+        { devices: worldStore.devices, rooms: worldStore.rooms },
+        intent
+      );
+      const validatedPlan = validation.cleanPlan;
+
+      const simulation = Simulator.simulate(
+        validatedPlan,
         worldStore.devices,
         worldStore.doors,
         worldStore.people,
@@ -89,7 +98,7 @@ export class AgentOrchestrator {
           rooms: worldStore.rooms,
           timeOfDay: worldStore.timeOfDay,
         },
-        rawPlan
+        validatedPlan
       );
       agentStore.setTimeSimulation(timeSim);
 
@@ -107,7 +116,7 @@ export class AgentOrchestrator {
       // STAGE 3: RISK & HARD INVARIANT POLICY EVALUATION
       // -----------------------------------------------------------------
       agentStore.updateStage(2, 'running', 'Evaluating deterministic hard invariants and soft risk heuristics...');
-      const { safePlan, violations } = PolicyEngine.evaluateInvariants(rawPlan, {
+      const { safePlan, violations } = PolicyEngine.evaluateInvariants(validatedPlan, {
         devices: worldStore.devices,
         doors: worldStore.doors,
         people: worldStore.people,

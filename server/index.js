@@ -23,6 +23,10 @@ const apiKey = process.env.GEMINI_API_KEY?.trim();
 const modelName = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash-lite';
 let aiClient = null;
 
+const OLLAMA_HOST = process.env.OLLAMA_HOST?.trim() || 'http://127.0.0.1:11434';
+const PREFER_OLLAMA = process.env.PREFER_OLLAMA === 'true';
+const OLLAMA_PREFERRED_MODEL = process.env.OLLAMA_MODEL?.trim() || 'qwen2.5:0.5b';
+
 if (apiKey && apiKey.length > 5) {
   try {
     aiClient = new GoogleGenAI({ apiKey });
@@ -31,14 +35,144 @@ if (apiKey && apiKey.length > 5) {
     console.warn('[SentinelServer] Failed to initialize GoogleGenAI:', err.message);
   }
 } else {
-  console.log('[SentinelServer] No GEMINI_API_KEY found in environment. System will utilize built-in Offline Fallback Interpreter.');
+  console.log('[SentinelServer] No GEMINI_API_KEY found in environment. System will utilize local Ollama or Offline Fallback.');
+}
+
+// Auto-start Ollama daemon if installed but not active
+async function ensureOllamaRunning() {
+  try {
+    const res = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: AbortSignal.timeout(1500) });
+    if (res.ok) {
+      console.log(`[SentinelServer] Local Ollama service is active at ${OLLAMA_HOST}`);
+      return true;
+    }
+  } catch (_) {}
+
+  const ollamaBin = '/usr/local/bin/ollama';
+  if (fs.existsSync(ollamaBin)) {
+    try {
+      console.log('[SentinelServer] Launching local Ollama background daemon...');
+      const proc = spawn(ollamaBin, ['serve'], { detached: true, stdio: 'ignore' });
+      proc.unref();
+      await new Promise((r) => setTimeout(r, 2000));
+      return true;
+    } catch (e) {
+      console.warn('[SentinelServer] Auto-launch Ollama failed:', e.message);
+    }
+  }
+  return false;
+}
+ensureOllamaRunning();
+
+// Query local Ollama with lightweight model and strict timeout
+async function queryOllamaIntent(prompt, worldSummary, speaker) {
+  const timeoutMs = parseInt(process.env.OLLAMA_TIMEOUT_MS, 10) || 6000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const tagsRes = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: controller.signal });
+    if (!tagsRes.ok) return null;
+    const tagsData = await tagsRes.json();
+    const available = (tagsData.models || []).map((m) => m.name || m.model);
+    if (!available || available.length === 0) return null;
+
+    const priorityList = [
+      OLLAMA_PREFERRED_MODEL,
+      'qwen2.5:0.5b',
+      'gemma:2b',
+      'deepseek-r1:8b',
+      available[0],
+    ];
+    let selectedModel = available[0];
+    for (const pref of priorityList) {
+      const match = available.find((m) => m === pref || m.startsWith(pref.split(':')[0]));
+      if (match) {
+        selectedModel = match;
+        break;
+      }
+    }
+
+    console.log(`[SentinelServer] Querying local Ollama model: ${selectedModel}`);
+
+    const systemPrompt = `You are the Interpreter module for SentinelHome, an autonomous 3D smart-home safety agent.
+Parse user commands into a valid JSON Intent object.
+Return ONLY valid JSON matching this exact structure:
+{
+  "goal": "leave_home" | "prepare_sleep" | "make_cozy" | "cook_mode" | "turn_off_devices" | "turn_on_devices" | "inspect_safety" | "custom_action",
+  "scope": "all" | "kitchen" | "hall" | "bedroom" | "bathroom" | "garage" | "pool" | "lawn" | "lights" | "fan" | "ac" | "doors",
+  "speaker": "${speaker || 'You'}",
+  "urgency": "LOW" | "NORMAL" | "HIGH" | "EMERGENCY",
+  "constraints": [],
+  "confidence": 0.9,
+  "ambiguities": [],
+  "rawUnderstanding": "brief deduction summary"
+}`;
+
+    const promptPayload = `${systemPrompt}\n\nCommand: "${prompt}"\nSpeaker: ${speaker || 'You'}\nJSON:`;
+
+    const genRes = await fetch(`${OLLAMA_HOST}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: selectedModel,
+        prompt: promptPayload,
+        format: 'json',
+        stream: false,
+        options: {
+          temperature: 0.1,
+          num_predict: 200,
+        },
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timer);
+    if (!genRes.ok) return null;
+    const genData = await genRes.json();
+    if (!genData.response) return null;
+
+    const parsed = JSON.parse(genData.response.trim());
+    return {
+      intent: {
+        goal: parsed.goal || 'custom_action',
+        scope: parsed.scope || 'all',
+        speaker: parsed.speaker || speaker || 'You',
+        urgency: ['LOW', 'NORMAL', 'HIGH', 'EMERGENCY'].includes(parsed.urgency) ? parsed.urgency : 'NORMAL',
+        constraints: Array.isArray(parsed.constraints) ? parsed.constraints : [],
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.88,
+        ambiguities: Array.isArray(parsed.ambiguities) ? parsed.ambiguities : [],
+        rawUnderstanding: `[Ollama ${selectedModel}] ${parsed.rawUnderstanding || parsed.goal || 'Parsed intent'}`,
+      },
+      model: selectedModel,
+    };
+  } catch (err) {
+    clearTimeout(timer);
+    console.warn(`[SentinelServer] Ollama inference failed: ${err.message}`);
+    return null;
+  }
 }
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  let ollamaInfo = { running: false, models: [] };
+  try {
+    const ores = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: AbortSignal.timeout(1000) });
+    if (ores.ok) {
+      const odata = await ores.json();
+      ollamaInfo = {
+        running: true,
+        models: (odata.models || []).map((m) => m.name || m.model),
+        preferredModel: OLLAMA_PREFERRED_MODEL,
+      };
+    }
+  } catch (_) {}
+
   res.json({
     status: 'ok',
     hasGeminiKey: !!aiClient,
+    preferOllama: PREFER_OLLAMA,
+    ollama: ollamaInfo,
     timestamp: new Date().toISOString(),
   });
 });
@@ -206,7 +340,7 @@ const intentSchema = {
   required: ['goal', 'scope', 'urgency', 'constraints', 'confidence', 'ambiguities'],
 };
 
-// Interpretation endpoint
+// Interpretation endpoint with multi-tier fallback (Gemini -> Local Ollama -> Offline NLP)
 app.post('/api/agent/interpret', async (req, res) => {
   const { prompt, worldSummary, speaker = 'You' } = req.body;
 
@@ -214,16 +348,25 @@ app.post('/api/agent/interpret', async (req, res) => {
     return res.status(400).json({ error: 'Missing prompt in request body.' });
   }
 
-  // If Gemini API is not configured or fails, client or fallback can handle it
-  if (!aiClient) {
-    return res.json({
-      fallback: true,
-      message: 'Gemini API key not configured on server. Use offline rule-based interpreter.',
-    });
+  // 1. If PREFER_OLLAMA is configured, try local Ollama first
+  if (PREFER_OLLAMA) {
+    console.log('[SentinelServer] PREFER_OLLAMA active. Querying local Ollama first...');
+    const ollamaResult = await queryOllamaIntent(prompt, worldSummary, speaker);
+    if (ollamaResult && ollamaResult.intent) {
+      return res.json({
+        fallback: false,
+        provider: 'ollama',
+        model: ollamaResult.model,
+        intent: ollamaResult.intent,
+      });
+    }
+    console.warn('[SentinelServer] Preferred Ollama failed. Attempting Gemini fallback...');
   }
 
-  try {
-    const systemPrompt = `You are the Interpreter module for SentinelHome, an autonomous 3D smart-home safety agent.
+  // 2. Query Gemini API if configured
+  if (aiClient) {
+    try {
+      const systemPrompt = `You are the Interpreter module for SentinelHome, an autonomous 3D smart-home safety agent.
 Your goal is to parse user commands into a structured Intent object.
 You output GOALS and CONSTRAINTS, NOT hardcoded device IDs or direct switch actions.
 The downstream Planner will derive actions from the Device Capability Schema.
@@ -239,49 +382,71 @@ Remember:
 - If a command is contradictory or dangerous (e.g. "turn off everything including life-support or fridge", "turn on pool filter with swimmer inside"), mark high risk constraints or ambiguities.
 - Never invent device-specific low-level commands. Derive the high-level intent.`;
 
-    const candidateModels = Array.from(new Set([modelName, 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite']));
-    let lastError = null;
-    let parsedIntent = null;
+      const candidateModels = Array.from(new Set([modelName, 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite']));
+      let lastError = null;
+      let parsedIntent = null;
+      let usedModel = null;
 
-    for (const m of candidateModels) {
-      try {
-        const response = await aiClient.models.generateContent({
-          model: m,
-          contents: [
-            { role: 'user', parts: [{ text: `Command: "${prompt}"\nSpeaker: ${speaker}` }] },
-          ],
-          config: {
-            systemInstruction: systemPrompt,
-            responseMimeType: 'application/json',
-            responseSchema: intentSchema,
-            temperature: 0.2,
-          },
-        });
+      for (const m of candidateModels) {
+        try {
+          const response = await aiClient.models.generateContent({
+            model: m,
+            contents: [
+              { role: 'user', parts: [{ text: `Command: "${prompt}"\nSpeaker: ${speaker}` }] },
+            ],
+            config: {
+              systemInstruction: systemPrompt,
+              responseMimeType: 'application/json',
+              responseSchema: intentSchema,
+              temperature: 0.2,
+            },
+          });
 
-        parsedIntent = JSON.parse(response.text);
-        if (parsedIntent) break;
-      } catch (err) {
-        lastError = err;
-        console.warn(`[SentinelServer] Model ${m} failed (${err.message}). Trying next candidate...`);
+          parsedIntent = JSON.parse(response.text);
+          if (parsedIntent) {
+            usedModel = m;
+            break;
+          }
+        } catch (err) {
+          lastError = err;
+          console.warn(`[SentinelServer] Gemini model ${m} failed (${err.message}). Trying next candidate...`);
+        }
       }
-    }
 
-    if (parsedIntent) {
-      return res.json({
-        fallback: false,
-        intent: parsedIntent,
-      });
-    }
+      if (parsedIntent) {
+        return res.json({
+          fallback: false,
+          provider: 'gemini',
+          model: usedModel,
+          intent: parsedIntent,
+        });
+      }
 
-    throw lastError || new Error('All candidate models failed');
-  } catch (error) {
-    console.error('[SentinelServer] Gemini interpretation error:', error);
+      console.warn('[SentinelServer] All Gemini candidate models failed:', lastError?.message);
+    } catch (error) {
+      console.warn('[SentinelServer] Gemini error/quota reached:', error.message);
+    }
+  }
+
+  // 3. Fallback to Local Ollama if Gemini failed, rate-limited, or unconfigured
+  console.log('[SentinelServer] Gemini unavailable or rate-limited. Auto-switching to local Ollama...');
+  const ollamaResult = await queryOllamaIntent(prompt, worldSummary, speaker);
+  if (ollamaResult && ollamaResult.intent) {
+    console.log(`[SentinelServer] Local Ollama successfully parsed intent using ${ollamaResult.model}`);
     return res.json({
-      fallback: true,
-      error: error.message,
-      message: 'Failed to query Gemini. Reverting to offline rule-based interpreter.',
+      fallback: false,
+      provider: 'ollama',
+      model: ollamaResult.model,
+      intent: ollamaResult.intent,
     });
   }
+
+  // 4. Final safety net: High-capability client offline rule-based interpreter
+  console.log('[SentinelServer] Both Gemini and Ollama unavailable. Falling back to built-in OfflineInterpreter.');
+  return res.json({
+    fallback: true,
+    message: 'All LLM endpoints unavailable. Reverting to offline rule-based interpreter.',
+  });
 });
 
 app.listen(port, () => {

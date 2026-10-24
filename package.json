@@ -10,7 +10,8 @@
     "server": "node server/index.js",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ollama:setup": "bash scripts/setup_ollama.sh"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",
