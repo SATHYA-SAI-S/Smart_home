@@ -1,5 +1,6 @@
 import { PlanStep, SimulationDiffItem } from '../types/agent';
 import { DeviceEntity, DoorEntity, PersonEntity, RoomZone } from '../types/world';
+import { TimeAwareSimulator } from './TimeAwareSimulator';
 
 export interface SimulationResult {
   simulatedDevices: DeviceEntity[];
@@ -90,5 +91,18 @@ export class Simulator {
       diff,
       cascadingHazards,
     };
+  }
+
+  /**
+   * Fast-forward sandbox world across time checkpoints (+5m, +1h, +8h).
+   * Computes real physical threshold crossing times without mutating the live world.
+   */
+  static fastForward(
+    world: { devices: DeviceEntity[]; doors: DoorEntity[]; people: PersonEntity[]; rooms: RoomZone[]; timeOfDay?: number },
+    plan: PlanStep[],
+    checkpointsMinutes?: number[],
+    tickIntervalMinutes?: number
+  ) {
+    return TimeAwareSimulator.fastForward(world, plan, checkpointsMinutes, tickIntervalMinutes);
   }
 }

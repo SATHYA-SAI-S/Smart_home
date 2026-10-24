@@ -11,7 +11,8 @@ import {
   LearnedPreference,
   PlanRecommendation,
   PreviewToken,
-  StateDriftDiff
+  StateDriftDiff,
+  TimeSimulationResult
 } from '../types/agent';
 import { INITIAL_RULES } from '../data/initialWorld';
 
@@ -46,6 +47,10 @@ interface AgentStoreState {
   // C1 State-aware Preview/Commit Token and Drift
   activeToken: PreviewToken | null;
   driftDiff: StateDriftDiff[] | null;
+
+  // C2 Time-aware Simulation & Timeline
+  timeSimulation: TimeSimulationResult | null;
+  selectedTimelineMinutes: number;
   
   // Rules and preferences
   rules: DeclarativeRule[];
@@ -73,6 +78,9 @@ interface AgentStoreState {
   setActiveToken: (token: PreviewToken | null) => void;
   setDriftDiff: (diffs: StateDriftDiff[] | null) => void;
   clearDrift: () => void;
+
+  setTimeSimulation: (res: TimeSimulationResult | null) => void;
+  setSelectedTimelineMinutes: (min: number) => void;
 
   // Rules actions
   toggleRule: (ruleId: string) => void;
@@ -121,6 +129,9 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
 
   activeToken: null,
   driftDiff: null,
+
+  timeSimulation: null,
+  selectedTimelineMinutes: 0,
 
   rules: INITIAL_RULES,
   preferences: [
@@ -278,6 +289,9 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
   setDriftDiff: (diffs) => set({ driftDiff: diffs }),
   clearDrift: () => set({ driftDiff: null }),
 
+  setTimeSimulation: (res) => set({ timeSimulation: res }),
+  setSelectedTimelineMinutes: (min) => set({ selectedTimelineMinutes: min }),
+
   clearPipeline: () => {
     set({
       currentIntent: null,
@@ -287,6 +301,8 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
       currentRecommendation: null,
       activeToken: null,
       driftDiff: null,
+      timeSimulation: null,
+      selectedTimelineMinutes: 0,
       stageStatuses: DEFAULT_STAGES,
       isProcessing: false,
     });

@@ -186,3 +186,32 @@ export interface PreviewResult {
   token: PreviewToken;
   intent: Intent;
 }
+
+export interface ThresholdCrossing {
+  hazardType: string;
+  thresholdName: string;
+  firstCrossingMinutes: number | null;
+  details: string;
+  mitigationAvailable: boolean;
+}
+
+export interface TimelineCheckpoint {
+  timeMinutes: number;
+  label: string; // e.g. "Now (0m)", "+5m", "+1h", "+8h"
+  simulatedDevices: any[];
+  simulatedDoors: any[];
+  findings: RiskFinding[];
+  environmentalValues: {
+    fridgeTempC?: number;
+    roomTempsC?: Record<string, number>;
+    stoveUnattendedMinutes?: number;
+    medicalBatteryPercent?: number;
+  };
+  timeOnlyHazards: string[];
+}
+
+export interface TimeSimulationResult {
+  checkpoints: TimelineCheckpoint[];
+  thresholdCrossings: ThresholdCrossing[];
+  timeOnlyCatches: string[];
+}

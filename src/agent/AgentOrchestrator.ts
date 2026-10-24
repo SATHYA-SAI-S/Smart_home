@@ -79,10 +79,27 @@ export class AgentOrchestrator {
       );
       useAgentStore.setState({ currentDiff: simulation.diff });
 
+      // C2: Run Time-Aware Fast-Forward Sandbox Simulation
+      const timeSim = Simulator.fastForward(
+        {
+          devices: worldStore.devices,
+          doors: worldStore.doors,
+          people: worldStore.people,
+          rooms: worldStore.rooms,
+          timeOfDay: worldStore.timeOfDay,
+        },
+        rawPlan
+      );
+      agentStore.setTimeSimulation(timeSim);
+
+      const timeOnlySummary = timeSim.timeOnlyCatches.length > 0
+        ? ` (${timeSim.timeOnlyCatches.length} time-delayed hazards detected across +5m/+1h/+8h)`
+        : '';
+
       agentStore.updateStage(
         1,
         'done',
-        `Derived ${rawPlan.length} candidate step(s), ${simulation.diff.length} state diff(s).`
+        `Derived ${rawPlan.length} candidate step(s), ${simulation.diff.length} state diff(s)${timeOnlySummary}.`
       );
 
       // -----------------------------------------------------------------

@@ -7,7 +7,11 @@ import {
   XOctagon, 
   AlertTriangle, 
   HelpCircle,
-  FileCheck2
+  FileCheck2,
+  Clock,
+  Gauge,
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { AgentOrchestrator } from '../../../agent/AgentOrchestrator';
@@ -19,12 +23,23 @@ export const PlanTab: React.FC = () => {
   const activeToken = useAgentStore((state) => state.activeToken);
   const driftDiff = useAgentStore((state) => state.driftDiff);
   const clearDrift = useAgentStore((state) => state.clearDrift);
+  const timeSimulation = useAgentStore((state) => state.timeSimulation);
+  const selectedTimelineMinutes = useAgentStore((state) => state.selectedTimelineMinutes);
+  const setSelectedTimelineMinutes = useAgentStore((state) => state.setSelectedTimelineMinutes);
+
+  const [planView, setPlanView] = React.useState<'safe' | 'literal'>('safe');
   const toggleStepApproval = useAgentStore((state) => state.toggleStepApproval);
   const approveAllSteps = useAgentStore((state) => state.approveAllSteps);
   const rejectAllSteps = useAgentStore((state) => state.rejectAllSteps);
 
-  const approvedCount = currentPlan.filter((s) => s.approved && !s.isBlockedByInvariant).length;
-  const blockedCount = currentPlan.filter((s) => s.isBlockedByInvariant).length;
+  const activeCheckpoint = timeSimulation?.checkpoints.find((c) => c.timeMinutes === selectedTimelineMinutes) || timeSimulation?.checkpoints[0];
+
+  const displayedPlan = planView === 'safe'
+    ? currentPlan
+    : currentPlan.map((s) => ({ ...s, isBlockedByInvariant: false, approved: true }));
+
+  const approvedCount = displayedPlan.filter((s) => s.approved && !s.isBlockedByInvariant).length;
+  const blockedCount = displayedPlan.filter((s) => s.isBlockedByInvariant).length;
 
   const handleExecute = async () => {
     await AgentOrchestrator.executeCurrentPlan();
@@ -90,6 +105,102 @@ export const PlanTab: React.FC = () => {
           </div>
         )}
 
+        {/* C2: TIME-AWARE SIMULATION TIMELINE SCRUBBER */}
+        {timeSimulation && timeSimulation.checkpoints.length > 0 && (
+          <div className="p-3 bg-slate-900/70 rounded-xl border border-indigo-500/20 mb-3 shadow-md">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="font-bold text-indigo-400 uppercase tracking-wider text-[10px] flex items-center space-x-1">
+                <Clock size={12} className="text-indigo-400" />
+                <span>Sandbox Time Projection</span>
+              </span>
+              {timeSimulation.timeOnlyCatches.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-mono text-[9px] font-bold border border-rose-500/30 flex items-center space-x-1">
+                  <AlertCircle size={10} />
+                  <span>{timeSimulation.timeOnlyCatches.length} Delayed Hazard(s)</span>
+                </span>
+              )}
+            </div>
+
+            {/* Checkpoint selector buttons */}
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              {timeSimulation.checkpoints.map((cp) => {
+                const isSelected = cp.timeMinutes === selectedTimelineMinutes;
+                const hasTimeOnly = cp.timeOnlyHazards.length > 0;
+                return (
+                  <button
+                    key={cp.timeMinutes}
+                    onClick={() => setSelectedTimelineMinutes(cp.timeMinutes)}
+                    className={`py-1 px-1 rounded-lg text-[10px] font-semibold transition flex flex-col items-center justify-center ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-indigo-500 to-sky-600 text-white shadow-md'
+                        : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
+                    } ${hasTimeOnly ? 'border border-rose-500/40' : ''}`}
+                  >
+                    <span>{cp.label}</span>
+                    {hasTimeOnly && (
+                      <span className="w-1 h-1 rounded-full bg-rose-400 mt-0.5 animate-ping"></span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Selected Checkpoint Environment Status */}
+            {activeCheckpoint && (
+              <div className="p-2 rounded-lg bg-black/30 border border-white/5 text-[10px] text-slate-300 font-mono space-y-1">
+                <div className="flex items-center justify-between text-[9px] text-slate-400">
+                  <span>Selected: <span className="text-white font-bold">{activeCheckpoint.label}</span></span>
+                  <span>Findings: <span className="text-amber-400 font-bold">{activeCheckpoint.findings.length}</span></span>
+                </div>
+                {activeCheckpoint.environmentalValues.fridgeTempC !== undefined && (
+                  <div className="flex items-center justify-between text-[9px]">
+                    <span className="text-slate-400">Fridge Temp:</span>
+                    <span className={activeCheckpoint.environmentalValues.fridgeTempC >= 4.0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                      {activeCheckpoint.environmentalValues.fridgeTempC}°C {activeCheckpoint.environmentalValues.fridgeTempC >= 4.0 ? '(Spoilage Risk)' : ''}
+                    </span>
+                  </div>
+                )}
+                {activeCheckpoint.timeOnlyHazards.length > 0 && (
+                  <div className="mt-1 pt-1 border-t border-white/5 text-[9px] text-rose-300 font-sans">
+                    <span className="font-bold">⚠️ Triggered at this checkpoint:</span>
+                    <ul className="list-disc list-inside mt-0.5 text-[9px] text-rose-200">
+                      {activeCheckpoint.timeOnlyHazards.map((h, i) => (
+                        <li key={i}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* LITERAL VS SAFE PLAN TOGGLE */}
+        <div className="flex items-center justify-between p-1 bg-slate-900/60 rounded-xl border border-white/5 mb-3">
+          <button
+            onClick={() => setPlanView('safe')}
+            className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-semibold transition flex items-center justify-center space-x-1 ${
+              planView === 'safe'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Sparkles size={12} />
+            <span>Safe Plan (Protected)</span>
+          </button>
+          <button
+            onClick={() => setPlanView('literal')}
+            className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-semibold transition flex items-center justify-center space-x-1 ${
+              planView === 'literal'
+                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <AlertTriangle size={12} />
+            <span>Literal (Naive Baseline)</span>
+          </button>
+        </div>
+
         {/* INTENT & CONFIDENCE SUMMARY */}
         {currentIntent && (
           <div className="p-3 bg-slate-900/60 rounded-xl border border-white/5 mb-3">
@@ -136,7 +247,7 @@ export const PlanTab: React.FC = () => {
 
         {/* DIFF TABLE / PLAN STEPS LIST */}
         <div className="space-y-2 mb-4">
-          {currentPlan.map((step) => {
+          {displayedPlan.map((step) => {
             const isBlocked = step.isBlockedByInvariant;
             const isApproved = step.approved;
 
