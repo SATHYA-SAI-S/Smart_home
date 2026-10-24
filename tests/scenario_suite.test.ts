@@ -549,4 +549,40 @@ describe('25+ Scenario Suite for Autonomous Safety Agent', () => {
     expect(interiorStep?.riskSeverity).toBe('HIGH');
     expect(interiorStep?.approved).toBe(false);
   });
+
+  // 32. Robust base64 stripping for voice input audio streams
+  it('Scenario 32: Robust base64 audio stripping prevents corruption across browser MIME variations', () => {
+    const samplePayload = 'SGVsbG8gU21hcnRIb21lIFZvaWNlIFRlc3QgU3RyZWFt'; // "Hello SmartHome Voice Test Stream"
+    const expectedBuffer = Buffer.from(samplePayload, 'base64');
+
+    const variations = [
+      `data:audio/webm;codecs=opus;base64,${samplePayload}`,
+      `data:audio/webm;codecs="opus,vorbis";base64,${samplePayload}`,
+      `data:audio/mp4;codecs="mp4a.40.2";base64,${samplePayload}`,
+      `data:audio/ogg;codecs=opus;base64,${samplePayload}`,
+      `data:audio/wav;base64,${samplePayload}`,
+      `data:audio/webm;base64,\n${samplePayload}\r\n`,
+      samplePayload, // pure base64 without prefix
+    ];
+
+    for (const variation of variations) {
+      let rawBase64 = variation;
+      const base64Marker = ';base64,';
+      const markerIdx = rawBase64.indexOf(base64Marker);
+      if (markerIdx !== -1) {
+        rawBase64 = rawBase64.slice(markerIdx + base64Marker.length);
+      } else if (rawBase64.startsWith('data:')) {
+        const commaIdx = rawBase64.lastIndexOf(',');
+        if (commaIdx !== -1) {
+          rawBase64 = rawBase64.slice(commaIdx + 1);
+        }
+      }
+      const cleanBase64 = rawBase64.replace(/\s+/g, '');
+      const decodedBuffer = Buffer.from(cleanBase64, 'base64');
+
+      expect(decodedBuffer.equals(expectedBuffer)).toBe(true);
+      expect(decodedBuffer.toString('utf-8')).toBe('Hello SmartHome Voice Test Stream');
+    }
+  });
 });
+

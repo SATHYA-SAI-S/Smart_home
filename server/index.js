@@ -69,9 +69,20 @@ app.post('/api/voice/transcribe', async (req, res) => {
     ext = '.webm';
   }
 
-  // Robust base64 stripping (handles any codec params like data:audio/webm;codecs=opus;base64,...)
-  const base64Data = audio.includes(',') ? audio.split(',')[1] : audio;
-  const buffer = Buffer.from(base64Data, 'base64');
+  // Robust base64 stripping (handles complex codec params like codecs="opus,vorbis", ;base64,, and whitespace)
+  let rawBase64 = audio;
+  const base64Marker = ';base64,';
+  const markerIdx = rawBase64.indexOf(base64Marker);
+  if (markerIdx !== -1) {
+    rawBase64 = rawBase64.slice(markerIdx + base64Marker.length);
+  } else if (rawBase64.startsWith('data:')) {
+    const commaIdx = rawBase64.lastIndexOf(',');
+    if (commaIdx !== -1) {
+      rawBase64 = rawBase64.slice(commaIdx + 1);
+    }
+  }
+  const cleanBase64 = rawBase64.replace(/\s+/g, '');
+  const buffer = Buffer.from(cleanBase64, 'base64');
 
   if (buffer.length < 512) {
     return res.status(400).json({
