@@ -29,6 +29,7 @@ interface WorldStoreState {
   fps: number;
   thirdPersonYaw: number;
   thirdPersonPitch: number;
+  isPointerLocked: boolean;
   
   // Actions
   setCameraMode: (mode: CameraViewMode) => void;
@@ -40,6 +41,7 @@ interface WorldStoreState {
   setFps: (fps: number) => void;
   setThirdPersonYaw: (yaw: number) => void;
   setThirdPersonPitch: (pitch: number) => void;
+  setIsPointerLocked: (locked: boolean) => void;
   
   // Device management
   updateDeviceState: (deviceId: string, newState: Partial<Record<string, any>>) => void;
@@ -81,6 +83,7 @@ export const useWorldStore = create<WorldStoreState>((set, get) => ({
   fps: 60,
   thirdPersonYaw: 0,
   thirdPersonPitch: 0.35,
+  isPointerLocked: false,
 
   setCameraMode: (mode) => set({ cameraMode: mode }),
   setSelectedPersonId: (id) => set({ selectedPersonId: id }),
@@ -91,6 +94,7 @@ export const useWorldStore = create<WorldStoreState>((set, get) => ({
   setFps: (fps) => set({ fps }),
   setThirdPersonYaw: (yaw) => set({ thirdPersonYaw: yaw }),
   setThirdPersonPitch: (pitch) => set({ thirdPersonPitch: pitch }),
+  setIsPointerLocked: (locked) => set({ isPointerLocked: locked }),
 
   updateDeviceState: (deviceId, newState) => {
     set((state) => ({

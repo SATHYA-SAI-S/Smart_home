@@ -67,14 +67,37 @@ export const CameraController: React.FC = () => {
       isMouseDown = false;
     };
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (useWorldStore.getState().cameraMode === 'person') {
+          if (document.pointerLockElement === canvas) {
+            document.exitPointerLock?.();
+          } else {
+            canvas.requestPointerLock?.();
+          }
+        }
+      }
+    };
+
+    const onPointerLockChange = () => {
+      const isLocked = document.pointerLockElement === canvas;
+      useWorldStore.getState().setIsPointerLocked(isLocked);
+    };
+
     canvas.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerlockchange', onPointerLockChange);
 
     return () => {
       canvas.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerlockchange', onPointerLockChange);
       if (document.pointerLockElement === canvas) {
         document.exitPointerLock?.();
       }

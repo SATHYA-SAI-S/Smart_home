@@ -12,6 +12,7 @@ export const HUD: React.FC = () => {
   const [showHelp, setShowHelp] = useState(false);
   const cameraMode = useWorldStore((state) => state.cameraMode);
   const setCameraMode = useWorldStore((state) => state.setCameraMode);
+  const isPointerLocked = useWorldStore((state) => state.isPointerLocked);
 
   // Global hotkeys 1, 2, 3, 4
   useEffect(() => {
@@ -47,11 +48,11 @@ export const HUD: React.FC = () => {
             <>
               <Navigation size={12} className="text-sky-400" />
               <span>
-                <strong className="text-white">WASD</strong> (W: Front • S: Back • A: Left • D: Right)
+                <strong className="text-white">WASD</strong> Move
               </span>
               <span className="text-slate-500">•</span>
               <span>
-                <strong className="text-sky-300">Move Mouse / Drag</strong> 360° Look Around
+                <strong className="text-sky-300">Mouse</strong> Look 360°
               </span>
               <span className="text-slate-500">•</span>
               <span>
@@ -61,6 +62,27 @@ export const HUD: React.FC = () => {
               <span>
                 <strong className="text-amber-300">F</strong> Door
               </span>
+              <span className="text-slate-500">•</span>
+              <button
+                onClick={() => {
+                  const canvas = document.querySelector('canvas');
+                  if (!canvas) return;
+                  if (document.pointerLockElement === canvas) {
+                    document.exitPointerLock?.();
+                  } else {
+                    canvas.requestPointerLock?.();
+                  }
+                }}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold pointer-events-auto transition cursor-pointer flex items-center space-x-1 ${
+                  isPointerLocked
+                    ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 hover:bg-amber-500/40'
+                    : 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/40'
+                }`}
+                title="Press F1 or Click to toggle Free Mouse Cursor / 360° Mouse Look"
+              >
+                <span>F1</span>
+                <span>{isPointerLocked ? 'Unlock Cursor' : 'Lock Cursor'}</span>
+              </button>
             </>
           ) : cameraMode === 'orbit' ? (
             <>
