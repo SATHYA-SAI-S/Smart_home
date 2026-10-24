@@ -93,6 +93,7 @@ export interface DeclarativeRule {
     | 'perimeter_exposure' 
     | 'vulnerable_occupant' 
     | 'energy_waste' 
+    | 'hazard_swimmer_filtration'
     | 'custom';
   parameters?: Record<string, any>;
   explanation: string;

@@ -113,7 +113,18 @@ export class OfflineInterpreter {
       scope = 'all';
       confidence = 0.95;
     }
-    // 8. Turn off / Cut power requests
+    // 8. Pool Filtering Commands & Switch
+    else if (
+      clean.match(/\b(filter|filtering|pool filter|skimmer|pool pump)\b/) ||
+      (clean.includes('pool') && clean.match(/\b(clean|filter|switch|pump|process)\b/))
+    ) {
+      const isOff = clean.match(/\b(off|stop|shut|disable|kill|deactivate)\b/);
+      goal = isOff ? 'turn_off_devices' : 'turn_on_devices';
+      scope = 'pool_filter';
+      confidence = 0.96;
+      constraints.push('verify_pool_swimmer_safety');
+    }
+    // 9. Turn off / Cut power requests
     else if (clean.match(/\b(turn off|shut down|power off|kill|disable|cut)\b/)) {
       goal = 'turn_off_devices';
       scope = targetRoom || (clean.includes('all') ? 'all' : 'unspecified');
@@ -127,21 +138,21 @@ export class OfflineInterpreter {
         constraints.push('main_breaker_cut_requested_critical_hazard');
       }
     }
-    // 9. Turn on / Illuminate
+    // 10. Turn on / Illuminate
     else if (clean.match(/\b(turn on|power on|activate|enable|light up)\b/)) {
       goal = 'turn_on_devices';
       scope = targetRoom || 'all';
       confidence = 0.85;
 
       const words = clean.split(/\s+/);
-      const knownDeviceWords = ['light', 'lights', 'fan', 'fans', 'ac', 'tv', 'stove', 'heater', 'camera', 'fridge', 'plug', 'gate', 'door', 'all'];
+      const knownDeviceWords = ['light', 'lights', 'fan', 'fans', 'ac', 'tv', 'stove', 'heater', 'camera', 'fridge', 'plug', 'gate', 'door', 'filter', 'filtering', 'pool', 'pump', 'all'];
       const hasKnownDevice = words.some((w) => knownDeviceWords.includes(w)) || targetRoom !== null;
       if (!hasKnownDevice) {
         confidence = 0.6;
         ambiguities.push(`Command "${raw}" mentions an unrecognized appliance or unknown device type.`);
       }
     }
-    // 10. Direct Lock / Unlock
+    // 11. Direct Lock / Unlock
     else if (clean.match(/\b(lock|unlock)\b/)) {
       goal = clean.includes('unlock') ? 'unlock_doors' : 'lock_doors';
       scope = targetRoom || 'doors';

@@ -127,4 +127,86 @@ describe('Hard Invariants Tests', () => {
     expect(safePlan[0].isBlockedByInvariant).toBe(true);
     expect(safePlan[0].invariantViolationMessage).toContain('currently open');
   });
+
+  it('Hard Invariant 4: Blocks turning on pool filter when someone is inside the swimming pool', () => {
+    const modifiedWorld = JSON.parse(JSON.stringify(worldState));
+    // Put "You" in the swimming pool
+    const userPerson = modifiedWorld.people.find((p: any) => p.name === 'You');
+    userPerson.currentRoom = 'pool';
+    userPerson.position = [11.0, -0.4, 13.5];
+
+    const turnOnFilterStep: PlanStep = {
+      id: 'step_pool_filter_on',
+      deviceId: 'pool_filter',
+      deviceName: 'Swimming Pool Filter Switch',
+      deviceType: 'pool_filter',
+      room: 'pool',
+      action: 'turn_on',
+      targetState: { power: 'on', filtering: true },
+      currentState: { power: 'off', filtering: false },
+      reason: 'User command',
+      isEssential: false,
+      approved: true,
+    };
+
+    const { safePlan, violations } = PolicyEngine.evaluateInvariants([turnOnFilterStep], modifiedWorld);
+    expect(violations.length).toBe(1);
+    expect(safePlan[0].isBlockedByInvariant).toBe(true);
+    expect(safePlan[0].approved).toBe(false);
+    expect(safePlan[0].invariantViolationMessage).toContain('swimming pool');
+    expect(safePlan[0].invariantViolationMessage).toContain('You');
+  });
+
+  it('Hard Invariant 4: Allows turning on pool filter when swimming pool is empty', () => {
+    const modifiedWorld = JSON.parse(JSON.stringify(worldState));
+    // Ensure all people are outside the pool
+    modifiedWorld.people.forEach((p: any) => {
+      if (p.currentRoom === 'pool') p.currentRoom = 'hall';
+    });
+
+    const turnOnFilterStep: PlanStep = {
+      id: 'step_pool_filter_on',
+      deviceId: 'pool_filter',
+      deviceName: 'Swimming Pool Filter Switch',
+      deviceType: 'pool_filter',
+      room: 'pool',
+      action: 'turn_on',
+      targetState: { power: 'on', filtering: true },
+      currentState: { power: 'off', filtering: false },
+      reason: 'User command',
+      isEssential: false,
+      approved: true,
+    };
+
+    const { safePlan, violations } = PolicyEngine.evaluateInvariants([turnOnFilterStep], modifiedWorld);
+    expect(violations.length).toBe(0);
+    expect(safePlan[0].isBlockedByInvariant).toBe(false);
+    expect(safePlan[0].approved).toBe(true);
+  });
+
+  it('Hard Invariant 4: Allows turning off pool filter even if someone is in the pool', () => {
+    const modifiedWorld = JSON.parse(JSON.stringify(worldState));
+    const userPerson = modifiedWorld.people.find((p: any) => p.name === 'You');
+    userPerson.currentRoom = 'pool';
+    userPerson.position = [11.0, -0.4, 13.5];
+
+    const turnOffFilterStep: PlanStep = {
+      id: 'step_pool_filter_off',
+      deviceId: 'pool_filter',
+      deviceName: 'Swimming Pool Filter Switch',
+      deviceType: 'pool_filter',
+      room: 'pool',
+      action: 'turn_off',
+      targetState: { power: 'off', filtering: false },
+      currentState: { power: 'on', filtering: true },
+      reason: 'User command',
+      isEssential: false,
+      approved: true,
+    };
+
+    const { safePlan, violations } = PolicyEngine.evaluateInvariants([turnOffFilterStep], modifiedWorld);
+    expect(violations.length).toBe(0);
+    expect(safePlan[0].isBlockedByInvariant).toBe(false);
+    expect(safePlan[0].approved).toBe(true);
+  });
 });

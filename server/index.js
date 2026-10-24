@@ -101,13 +101,14 @@ You output GOALS and CONSTRAINTS, NOT hardcoded device IDs or direct switch acti
 The downstream Planner will derive actions from the Device Capability Schema.
 
 World Context:
-${worldSummary ? JSON.stringify(worldSummary) : 'Standard 7-room residence (Main Hall, Bedroom, Bathroom, Kitchen, Garage, Terrace, Lawn). Inhabitants: You (adult), Grandpa (vulnerable/elderly), Kid.'}
+${worldSummary ? JSON.stringify(worldSummary) : 'Standard 8-zone residence (Main Hall, Bedroom, Bathroom, Kitchen, Garage, Terrace, Lawn, Swimming Pool). Inhabitants: You (adult), Grandpa (vulnerable/elderly), Kid, Sudharshini, Buddy (dog).'}
 
 Current Speaker: ${speaker}
 
 Remember:
-- Handle typos, spoken phrasing, indirect requests ("it's freezing", "make it cozy", "I am stepping out", "Grandpa is resting").
-- If a command is contradictory or dangerous (e.g. "turn off everything including life-support or fridge"), mark high risk constraints or ambiguities.
+- Handle typos, spoken phrasing, indirect requests ("it's freezing", "make it cozy", "I am stepping out", "Grandpa is resting", "filter the pool", "turn on filtering process switch").
+- SWIMMING POOL SAFETY: If someone requests turning on the swimming pool filter while a swimmer or person is in the pool, record constraint "swimmer_in_pool_filtration_hazard" or goal "turn_on_devices" with scope "pool_filter". The downstream PolicyEngine will strictly enforce this invariant.
+- If a command is contradictory or dangerous (e.g. "turn off everything including life-support or fridge", "turn on pool filter with swimmer inside"), mark high risk constraints or ambiguities.
 - Never invent device-specific low-level commands. Derive the high-level intent.`;
 
     const response = await aiClient.models.generateContent({

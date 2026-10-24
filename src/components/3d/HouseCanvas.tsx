@@ -7,6 +7,7 @@ import { FloorAndWalls } from './Rooms/FloorAndWalls';
 import { Furniture } from './Rooms/Furniture';
 import { Doors } from './Rooms/Doors';
 import { LawnAndGarden } from './Rooms/LawnAndGarden';
+import { SwimmingPool } from './Rooms/SwimmingPool';
 import { VisualDevices } from './Devices/VisualDevices';
 import { Avatar } from './People/Avatar';
 import { PeopleController } from './People/PeopleController';
@@ -119,6 +120,7 @@ export const HouseCanvas: React.FC = () => {
           <Furniture />
           <Doors />
           <LawnAndGarden />
+          <SwimmingPool />
           <VisualDevices />
 
           {/* Inhabitants & Motion Physics */}

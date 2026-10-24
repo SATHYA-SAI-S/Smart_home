@@ -54,6 +54,7 @@ export const ChatTab: React.FC = () => {
     { label: "Make it cozy", prompt: "Make it cozy in the hall for movie night." },
     { label: "I'm cooking", prompt: "I'm cooking dinner, keep the kitchen lights and stove ready." },
     { label: "Grandpa's power", prompt: "Turn off what Grandpa isn't using right now." },
+    { label: "Filter pool", prompt: "Turn on the pool filter." },
     { label: "Check home safety", prompt: "Is everything safe in the house right now?" },
     { label: "Lock all doors", prompt: "Lock all doors and perimeter gates." },
   ];

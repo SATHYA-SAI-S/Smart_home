@@ -88,6 +88,21 @@ export class Planner {
             approved: true,
           });
         }
+        if (dev.type === 'pool_filter' && dev.state.power === 'on') {
+          rawSteps.push({
+            id: `step_${dev.id}_off`,
+            deviceId: dev.id,
+            deviceName: dev.name,
+            deviceType: dev.type,
+            room: dev.room,
+            action: 'turn_off',
+            targetState: { power: 'off', filtering: false },
+            currentState: { ...dev.state },
+            reason: 'Power down pool filtration pump upon departure.',
+            isEssential: false,
+            approved: true,
+          });
+        }
       });
 
       // Step C: Close garage door if open

@@ -43,8 +43,8 @@ export const LawnAndGarden: React.FC = () => {
       {/* Procedural Stylized Trees */}
       {[
         { x: -10.0, z: 18.0, scale: 1.2 },
-        { x: 12.0, z: 17.5, scale: 1.1 },
-        { x: 13.5, z: 11.0, scale: 0.9 },
+        { x: 14.5, z: 18.2, scale: 1.1 },
+        { x: 15.0, z: 10.5, scale: 0.9 },
         { x: -12.5, z: -5.0, scale: 1.0 },
         { x: 7.0, z: -6.5, scale: 1.1 },
       ].map((tree, i) => (

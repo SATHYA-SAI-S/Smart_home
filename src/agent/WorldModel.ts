@@ -303,6 +303,27 @@ const defaultSchemas: DeviceSchema[] = [
       },
     },
   },
+  {
+    type: 'pool_filter',
+    criticality: 'SAFETY',
+    actions: {
+      turn_off: {
+        name: 'Deactivate Pool Filter',
+        description: 'Shuts off swimming pool filtration pump and circulation',
+        preconditions: { power: 'on' },
+        effects: { power: 'off', filtering: false },
+        reversibility: 'IMMEDIATE',
+      },
+      turn_on: {
+        name: 'Activate Pool Filter',
+        description: 'Starts swimming pool filtration pump, skimmer, and circulation',
+        preconditions: { power: 'off' },
+        effects: { power: 'on', filtering: true },
+        hazards: ['suction_entrapment_hazard_if_swimmer_present', 'electrical_shock_risk'],
+        reversibility: 'IMMEDIATE',
+      },
+    },
+  },
 ];
 
 // Register default schemas

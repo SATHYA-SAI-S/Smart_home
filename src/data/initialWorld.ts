@@ -75,6 +75,18 @@ export const INITIAL_ROOMS: RoomZone[] = [
     floorTextureType: 'deck',
   },
   {
+    id: 'pool',
+    name: 'Swimming Pool',
+    bounds: {
+      min: [8.2, -1.6, 10.5],
+      max: [14.0, 1.5, 16.8],
+    },
+    cameraPosition: [14.5, 4.0, 17.5],
+    cameraTarget: [11.1, 0, 13.6],
+    color: '#06b6d4',
+    floorTextureType: 'tile',
+  },
+  {
     id: 'lawn',
     name: 'Lawn & Garden',
     bounds: {
@@ -375,6 +387,18 @@ export const INITIAL_DEVICES: DeviceEntity[] = [
     state: { power: 'on', recording: true },
     powerConsumptionWatts: 12,
   },
+
+  // SWIMMING POOL (IN FRONT OF TERRACE)
+  {
+    id: 'pool_filter',
+    name: 'Swimming Pool Filter Switch',
+    type: 'pool_filter',
+    room: 'pool',
+    position: [14.1, 0.4, 13.6],
+    criticality: 'SAFETY',
+    state: { power: 'off', filtering: false },
+    powerConsumptionWatts: 1200,
+  },
 ];
 
 export const INITIAL_DOORS: DoorEntity[] = [
@@ -658,5 +682,15 @@ export const INITIAL_RULES: DeclarativeRule[] = [
     conditionType: 'energy_waste',
     explanation: 'Lighting and entertainment running in empty zones causes unnecessary power consumption.',
     suggestedFix: 'Propose turning off non-essential loads in vacant areas.',
+  },
+  {
+    id: 'rule_pool_filter_swimmer',
+    name: 'Pool Filtration Swimmer Safety',
+    description: 'Strictly prohibit activating the pool filtration pump whenever someone is inside the swimming pool.',
+    enabled: true,
+    severity: 'CRITICAL',
+    conditionType: 'hazard_swimmer_filtration',
+    explanation: 'Active high-volume suction filtration while people are in the pool presents severe entrapment, injury, and electrical shock risks.',
+    suggestedFix: 'Ensure all swimmers have exited the pool and verify pool zone is empty before activating filtration.',
   },
 ];
