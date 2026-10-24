@@ -10,7 +10,9 @@ import {
   ShieldAlert, 
   ChevronDown, 
   ChevronUp,
-  Zap
+  Zap,
+  Loader2,
+  Radio
 } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { useWorldStore } from '../../../store/useWorldStore';
@@ -20,7 +22,14 @@ import { AutonomyLevel } from '../../../types/agent';
 export const ChatTab: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   const [collapsedStages, setCollapsedStages] = useState<{ [msgId: string]: boolean }>({});
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const messages = useAgentStore((state) => state.messages);
   const currentSpeaker = useAgentStore((state) => state.currentSpeaker);
@@ -36,11 +45,167 @@ export const ChatTab: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (_) {}
+      }
+    };
+  }, []);
+
   const handleSend = async (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
     if (!text) return;
     setInputText('');
     await AgentOrchestrator.runPipeline(text, currentSpeaker);
+  };
+
+  const startRecording = async () => {
+    try {
+      setVoiceStatus('Accessing microphone...');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : '';
+
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstart = () => {
+        setIsListening(true);
+        setVoiceStatus('Listening... Speak now, click mic to transcribe');
+      };
+
+      // Real-time interim preview via Web Speech API if supported in browser
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+          recognition.onresult = (e: any) => {
+            const transcript = Array.from(e.results)
+              .map((r: any) => r[0].transcript)
+              .join('');
+            if (transcript) {
+              setInputText(transcript);
+            }
+          };
+          recognition.onerror = () => {};
+          recognition.start();
+          recognitionRef.current = recognition;
+        } catch (_) {}
+      }
+
+      mediaRecorder.start(200);
+    } catch (err: any) {
+      console.error('Microphone access failed:', err);
+      setIsListening(false);
+      setVoiceStatus('Microphone permission denied or unavailable');
+      setTimeout(() => setVoiceStatus(null), 3500);
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (_) {}
+      recognitionRef.current = null;
+    }
+
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
+      setIsListening(false);
+      return;
+    }
+
+    setIsListening(false);
+    setIsTranscribing(true);
+    setVoiceStatus('Transcribing speech with Whisper AI...');
+
+    const mediaRecorder = mediaRecorderRef.current;
+
+    mediaRecorder.onstop = async () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+
+      try {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: mediaRecorder.mimeType || 'audio/webm',
+        });
+
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Data = reader.result as string;
+
+          try {
+            const res = await fetch('/api/voice/transcribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ audio: base64Data }),
+            });
+
+            const data = await res.json();
+            setIsTranscribing(false);
+
+            if (res.ok && data.text && data.text.trim().length > 0) {
+              const transcribedText = data.text.trim();
+              setInputText(transcribedText);
+              setVoiceStatus(`Transcribed: "${transcribedText}"`);
+              setTimeout(() => setVoiceStatus(null), 3500);
+              // Forward transcribed speech directly into Gemini pipeline
+              await handleSend(transcribedText);
+            } else {
+              setVoiceStatus(data.error || 'No speech detected. Please try again.');
+              setTimeout(() => setVoiceStatus(null), 3500);
+            }
+          } catch (fetchErr: any) {
+            console.error('Transcription request failed:', fetchErr);
+            setIsTranscribing(false);
+            setVoiceStatus('Whisper transcription error. Check backend server.');
+            setTimeout(() => setVoiceStatus(null), 3500);
+          }
+        };
+      } catch (procErr: any) {
+        console.error('Error processing audio recording:', procErr);
+        setIsTranscribing(false);
+        setVoiceStatus('Audio processing failed');
+        setTimeout(() => setVoiceStatus(null), 3000);
+      }
+    };
+
+    mediaRecorder.stop();
+  };
+
+  const toggleRecording = () => {
+    if (isListening) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   };
 
   const toggleStages = (msgId: string) => {
@@ -204,8 +369,23 @@ export const ChatTab: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* VOICE STATUS BANNER */}
+      {voiceStatus && (
+        <div className={`mt-2 px-3 py-1.5 rounded-lg text-xs flex items-center space-x-2 border transition ${
+          isListening
+            ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+            : isTranscribing
+            ? 'bg-sky-500/10 border-sky-500/30 text-sky-300'
+            : 'bg-slate-800/80 border-white/10 text-slate-300'
+        }`}>
+          {isListening && <Radio size={14} className="animate-pulse text-rose-400 shrink-0" />}
+          {isTranscribing && <Loader2 size={14} className="animate-spin text-sky-400 shrink-0" />}
+          <span className="truncate">{voiceStatus}</span>
+        </div>
+      )}
+
       {/* INPUT COMMAND BAR */}
-      <div className="pt-3 border-t border-white/10 mt-2">
+      <div className="pt-2 border-t border-white/10 mt-2">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -218,30 +398,37 @@ export const ChatTab: React.FC = () => {
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Give a command (e.g. 'I am leaving home', 'make it cozy')..."
-              className="w-full bg-slate-900/90 text-xs text-white placeholder-slate-400 rounded-xl px-3.5 py-2.5 border border-white/15 focus:outline-none focus:border-sky-400 transition pr-9"
+              placeholder={isListening ? "Listening to your voice..." : isTranscribing ? "Transcribing speech with Whisper..." : "Give a command (e.g. 'I am leaving home', 'make it cozy')..."}
+              className={`w-full bg-slate-900/90 text-xs text-white placeholder-slate-400 rounded-xl px-3.5 py-2.5 border transition pr-10 ${
+                isListening ? 'border-rose-500/60 ring-1 ring-rose-500/40' : 'border-white/15 focus:outline-none focus:border-sky-400'
+              }`}
             />
-            {/* Mic / Simulated Voice Button */}
+            {/* Mic / Whisper Voice Button */}
             <button
               type="button"
-              onClick={() => {
-                setIsListening(!isListening);
-                if (!isListening) {
-                  setInputText("I'm leaving home, make sure everything is safe.");
-                }
-              }}
-              className={`absolute right-2 top-2 p-1 rounded-lg transition ${
-                isListening ? 'text-rose-400 animate-pulse' : 'text-slate-400 hover:text-white'
+              onClick={toggleRecording}
+              disabled={isTranscribing}
+              className={`absolute right-2 top-2 p-1.5 rounded-lg transition ${
+                isTranscribing
+                  ? 'text-sky-400 cursor-wait'
+                  : isListening
+                  ? 'text-rose-400 bg-rose-500/20 animate-pulse'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="Voice Input Simulation"
+              title={isListening ? "Click to stop & transcribe with Whisper" : "Click to speak via Whisper AI voice input"}
             >
-              {isListening ? <Mic size={15} /> : <MicOff size={15} />}
+              {isTranscribing ? (
+                <Loader2 size={15} className="animate-spin" />
+              ) : (
+                <Mic size={15} />
+              )}
             </button>
           </div>
 
           <button
             type="submit"
-            className="p-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white transition shadow-md shadow-sky-500/30 flex items-center justify-center shrink-0"
+            disabled={isListening || isTranscribing}
+            className="p-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white transition shadow-md shadow-sky-500/30 flex items-center justify-center shrink-0"
           >
             <Send size={15} />
           </button>

@@ -1,15 +1,23 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '25mb' }));
 
 const apiKey = process.env.GEMINI_API_KEY?.trim();
 const modelName = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
@@ -33,6 +41,84 @@ app.get('/api/health', (req, res) => {
     hasGeminiKey: !!aiClient,
     timestamp: new Date().toISOString(),
   });
+});
+
+// Speech-to-Text Transcription via Open-Source Whisper
+app.post('/api/voice/transcribe', async (req, res) => {
+  const { audio } = req.body;
+
+  if (!audio) {
+    return res.status(400).json({ error: 'Missing audio data in request body.' });
+  }
+
+  // Clean base64 header if present
+  const base64Data = audio.replace(/^data:audio\/\w+;base64,/, '');
+  const buffer = Buffer.from(base64Data, 'base64');
+  const tempFilePath = path.join(os.tmpdir(), `sentinel_voice_${Date.now()}.webm`);
+
+  try {
+    await fs.promises.writeFile(tempFilePath, buffer);
+
+    const scriptPath = path.join(__dirname, 'transcribe.py');
+    const pythonProc = spawn('python3', [scriptPath, tempFilePath]);
+
+    let stdoutData = '';
+    let stderrData = '';
+
+    pythonProc.stdout.on('data', (data) => {
+      stdoutData += data.toString();
+    });
+
+    pythonProc.stderr.on('data', (data) => {
+      stderrData += data.toString();
+    });
+
+    pythonProc.on('close', async (code) => {
+      try {
+        if (fs.existsSync(tempFilePath)) {
+          await fs.promises.unlink(tempFilePath);
+        }
+      } catch (err) {
+        console.warn('[SentinelServer] Failed to clean temp voice file:', err.message);
+      }
+
+      if (code !== 0) {
+        console.error('[SentinelServer] Whisper transcription failed:', stderrData);
+        return res.status(500).json({
+          error: 'Whisper transcription failed',
+          details: stderrData,
+        });
+      }
+
+      try {
+        const parsed = JSON.parse(stdoutData.trim());
+        if (parsed.error) {
+          return res.status(500).json({ error: parsed.error });
+        }
+        console.log(`[SentinelServer] Whisper Transcribed: "${parsed.text}" (lang: ${parsed.language})`);
+        return res.json({
+          success: true,
+          text: parsed.text,
+          language: parsed.language,
+          model: 'openai-whisper-base',
+        });
+      } catch (err) {
+        console.error('[SentinelServer] Failed to parse Whisper output:', stdoutData);
+        return res.status(500).json({
+          error: 'Invalid Whisper output format',
+          raw: stdoutData,
+        });
+      }
+    });
+  } catch (err) {
+    console.error('[SentinelServer] Error handling voice upload:', err);
+    try {
+      if (fs.existsSync(tempFilePath)) {
+        await fs.promises.unlink(tempFilePath);
+      }
+    } catch (_) {}
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Interpreter schema for Gemini structured output
