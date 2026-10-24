@@ -50,6 +50,7 @@ export class AgentOrchestrator {
       // -----------------------------------------------------------------
       agentStore.updateStage(0, 'running', 'Extracting goals and semantic constraints...');
       const intent = await Interpreter.interpret(prompt, speaker, worldStore.rooms);
+      useAgentStore.setState({ currentIntent: intent });
 
       agentStore.updateStage(
         0,
@@ -75,6 +76,7 @@ export class AgentOrchestrator {
         worldStore.people,
         worldStore.rooms
       );
+      useAgentStore.setState({ currentDiff: simulation.diff });
 
       agentStore.updateStage(
         1,
@@ -121,6 +123,11 @@ export class AgentOrchestrator {
       agentStore.updateMessageRecommendation(agentMsgId, recommendation, findings);
       agentStore.updateStage(3, 'done', recommendation.summaryExplanation);
 
+      // Automatically switch to Plan Tab so user can review the generated plan
+      if (recommendation.primaryPlan && recommendation.primaryPlan.length > 0) {
+        agentStore.setActiveTab('plan');
+      }
+
       // -----------------------------------------------------------------
       // STAGE 5: CONFIRMATION GATE
       // -----------------------------------------------------------------
@@ -140,6 +147,9 @@ export class AgentOrchestrator {
           'blocked',
           `Awaiting human confirmation (Autonomy Level: "${autonomy}"). Review plan in Tab 2.`
         );
+
+        // Ensure user is on the Plan Tab to view and approve
+        agentStore.setActiveTab('plan');
 
         // Update message text
         agentStore.updateMessageStages(

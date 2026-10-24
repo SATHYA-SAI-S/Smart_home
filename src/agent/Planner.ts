@@ -261,6 +261,13 @@ export class Planner {
           dev.room === intent.scope ||
           dev.type === intent.scope ||
           dev.id === intent.scope ||
+          (intent.scope.includes(dev.room) && intent.scope.includes(dev.type)) ||
+          (intent.scope === 'fan' && dev.type === 'fan') ||
+          (intent.scope === 'fans' && dev.type === 'fan') ||
+          (intent.scope === 'light' && dev.type === 'light') ||
+          (intent.scope === 'lights' && dev.type === 'light') ||
+          (intent.scope === 'ac' && dev.type === 'ac') ||
+          (intent.scope === 'tv' && dev.type === 'tv') ||
           (intent.scope === 'doors' && (dev.type === 'door_lock' || dev.type === 'garage_door' || dev.type === 'gate')) ||
           (intent.scope === 'locks' && dev.type === 'door_lock') ||
           (intent.scope === 'exterior' && (dev.room === 'lawn' || dev.id.includes('main_door') || dev.id.includes('garage') || dev.id.includes('gate'))) ||
@@ -278,7 +285,19 @@ export class Planner {
           intent.goal === 'lock_perimeter' ||
           intent.goal === 'lock_all_doors';
 
-        if (intent.goal.includes('turn_off') && dev.state.power === 'on') {
+        const isOffGoal =
+          intent.goal.includes('turn_off') ||
+          intent.goal === 'off' ||
+          intent.goal === 'power_off' ||
+          intent.goal === 'deactivate';
+
+        const isOnGoal =
+          intent.goal.includes('turn_on') ||
+          intent.goal === 'on' ||
+          intent.goal === 'power_on' ||
+          intent.goal === 'activate';
+
+        if (isOffGoal && dev.state.power === 'on') {
           rawSteps.push({
             id: `step_${dev.id}_off`,
             deviceId: dev.id,
@@ -292,7 +311,7 @@ export class Planner {
             isEssential: dev.criticality === 'ESSENTIAL',
             approved: true,
           });
-        } else if (intent.goal.includes('turn_on') && dev.state.power === 'off') {
+        } else if (isOnGoal && dev.state.power === 'off') {
           rawSteps.push({
             id: `step_${dev.id}_on`,
             deviceId: dev.id,

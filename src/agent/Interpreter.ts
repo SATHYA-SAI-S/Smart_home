@@ -50,6 +50,20 @@ export class OfflineInterpreter {
       }
     }
 
+    // Detect device keywords in utterance with word boundaries
+    let detectedDevice: string | null = null;
+    if (clean.match(/\bfans?\b/)) detectedDevice = 'fan';
+    else if (clean.match(/\blights?\b|\blamps?\b|\blite\b/)) detectedDevice = 'light';
+    else if (clean.match(/\bac\b/) || clean.includes('air conditioner') || clean.includes('cooling')) detectedDevice = 'ac';
+    else if (clean.match(/\btv\b/) || clean.includes('television')) detectedDevice = 'tv';
+    else if (clean.match(/\bstoves?\b|\bovens?\b|\bcooktop\b/)) detectedDevice = 'stove';
+    else if (clean.match(/\bfridges?\b|\brefrigerators?\b/)) detectedDevice = 'refrigerator';
+    else if (clean.match(/\bheaters?\b|\bgeysers?\b/)) detectedDevice = 'water_heater';
+    else if (clean.match(/\bpools?\b|\bfilters?\b|\bpumps?\b/)) detectedDevice = 'pool_filter';
+    else if (clean.match(/\bdoors?\b|\blocks?\b/)) detectedDevice = 'doors';
+    else if (clean.match(/\bgarages?\b/)) detectedDevice = 'garage_door';
+    else if (clean.match(/\bgates?\b/)) detectedDevice = 'gate';
+
     // 1. Leaving Home / Out / Departure (with typo tolerance)
     if (
       clean.match(/\b(leav(e|ing)?|leva(e|ing)?|step(ping)? out|goodbye|bye|going out|away|vacation|depart)\b/) ||
@@ -124,11 +138,14 @@ export class OfflineInterpreter {
       confidence = 0.96;
       constraints.push('verify_pool_swimmer_safety');
     }
-    // 9. Turn off / Cut power requests
-    else if (clean.match(/\b(turn off|shut down|power off|kill|disable|cut)\b/)) {
+    // 9. Turn off / Cut power requests (e.g. "off the fan", "turn off lights", "switch off AC")
+    else if (
+      clean.match(/\b(turn off|shut down|power off|kill|disable|cut|switch off|deactivate|extinguish)\b/) ||
+      (clean.match(/\b(off)\b/) && (detectedDevice !== null || targetRoom !== null || clean.includes('all')))
+    ) {
       goal = 'turn_off_devices';
-      scope = targetRoom || (clean.includes('all') ? 'all' : 'unspecified');
-      confidence = 0.85;
+      scope = targetRoom || detectedDevice || (clean.includes('all') ? 'all' : 'unspecified');
+      confidence = detectedDevice || targetRoom ? 0.95 : 0.85;
 
       // Adversarial test detection: "turn off fridge", "cut main switch", "disable smoke detector"
       if (clean.includes('fridge') || clean.includes('refrigerator')) {
@@ -141,11 +158,14 @@ export class OfflineInterpreter {
         constraints.push('sensor_or_siren_disable_requested_invariant_must_block');
       }
     }
-    // 10. Turn on / Illuminate
-    else if (clean.match(/\b(turn on|power on|activate|enable|light up)\b/)) {
+    // 10. Turn on / Illuminate (e.g. "on the fan", "turn on hall lights")
+    else if (
+      clean.match(/\b(turn on|power on|activate|enable|light up|switch on|start)\b/) ||
+      (clean.match(/\b(on)\b/) && (detectedDevice !== null || targetRoom !== null))
+    ) {
       goal = 'turn_on_devices';
-      scope = targetRoom || 'all';
-      confidence = 0.85;
+      scope = targetRoom || detectedDevice || 'all';
+      confidence = detectedDevice || targetRoom ? 0.95 : 0.85;
 
       if ((clean.includes('camera') || clean.includes('mic')) && (clean.includes('bedroom') || clean.includes('bathroom'))) {
         constraints.push('camera_in_private_room_prohibited');
@@ -156,7 +176,7 @@ export class OfflineInterpreter {
 
       const words = clean.split(/\s+/);
       const knownDeviceWords = ['light', 'lights', 'fan', 'fans', 'ac', 'tv', 'stove', 'heater', 'camera', 'fridge', 'plug', 'gate', 'door', 'gas', 'sensor', 'siren', 'filter', 'filtering', 'pool', 'pump', 'all'];
-      const hasKnownDevice = words.some((w) => knownDeviceWords.includes(w)) || targetRoom !== null;
+      const hasKnownDevice = words.some((w) => knownDeviceWords.includes(w)) || targetRoom !== null || detectedDevice !== null;
       if (!hasKnownDevice) {
         confidence = 0.6;
         ambiguities.push(`Command "${raw}" mentions an unrecognized appliance or unknown device type.`);

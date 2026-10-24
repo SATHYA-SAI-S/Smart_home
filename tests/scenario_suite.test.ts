@@ -584,5 +584,23 @@ describe('25+ Scenario Suite for Autonomous Safety Agent', () => {
       expect(decodedBuffer.toString('utf-8')).toBe('Hello SmartHome Voice Test Stream');
     }
   });
+
+  // 33. Natural direct device power: "off the fan"
+  it('Scenario 33: "off the fan" and "fan off" correctly generates plan step for hall_fan', () => {
+    const world = freshWorld();
+    const utterances = ['off the fan', 'fan off', 'turn off the fan', 'switch off fan'];
+
+    for (const text of utterances) {
+      const intent = OfflineInterpreter.parse(text, defaultSpeaker, world.rooms);
+      expect(intent.goal).toBe('turn_off_devices');
+      expect(intent.scope).toBe('fan');
+
+      const plan = Planner.plan(intent, world);
+      expect(plan.length).toBe(1);
+      expect(plan[0].deviceId).toBe('hall_fan');
+      expect(plan[0].action).toBe('turn_off');
+      expect(plan[0].targetState.power).toBe('off');
+    }
+  });
 });
 
