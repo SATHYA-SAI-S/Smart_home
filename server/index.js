@@ -84,9 +84,9 @@ app.post('/api/voice/transcribe', async (req, res) => {
   const cleanBase64 = rawBase64.replace(/\s+/g, '');
   const buffer = Buffer.from(cleanBase64, 'base64');
 
-  if (buffer.length < 512) {
+  if (buffer.length < 64) {
     return res.status(400).json({
-      error: 'Audio recording was too short or empty. Please speak your command clearly.',
+      error: 'Audio recording was empty. Please speak your command clearly.',
     });
   }
 

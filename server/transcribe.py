@@ -19,8 +19,8 @@ def main():
         sys.exit(1)
 
     file_size = os.path.getsize(audio_path)
-    if file_size < 512:
-        # File is too small / empty audio stream
+    if file_size < 64:
+        # File is empty
         print(json.dumps({"text": "", "language": "en"}))
         sys.exit(0)
 

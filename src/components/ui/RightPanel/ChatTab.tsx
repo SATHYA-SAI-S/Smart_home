@@ -24,6 +24,7 @@ export const ChatTab: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+  const [audioVolume, setAudioVolume] = useState<number>(0);
   const [collapsedStages, setCollapsedStages] = useState<{ [msgId: string]: boolean }>({});
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -31,6 +32,11 @@ export const ChatTab: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
   const interimTranscriptRef = useRef<string>('');
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const silenceTimerRef = useRef<any>(null);
+  const hasSpokenRef = useRef<boolean>(false);
 
   const messages = useAgentStore((state) => state.messages);
   const currentSpeaker = useAgentStore((state) => state.currentSpeaker);
@@ -56,6 +62,17 @@ export const ChatTab: React.FC = () => {
           recognitionRef.current.stop();
         } catch (_) {}
       }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close();
+        } catch (_) {}
+      }
     };
   }, []);
 
@@ -66,74 +83,23 @@ export const ChatTab: React.FC = () => {
     await AgentOrchestrator.runPipeline(text, currentSpeaker);
   };
 
-  const startRecording = async () => {
-    try {
-      setVoiceStatus('Accessing microphone...');
-      interimTranscriptRef.current = '';
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-
-      const candidateMimeTypes = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/mp4',
-        'audio/ogg;codecs=opus',
-        'audio/ogg',
-        'audio/wav',
-      ];
-      const mimeType = candidateMimeTypes.find((type) => MediaRecorder.isTypeSupported(type)) || '';
-
-      const mediaRecorder = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream);
-
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstart = () => {
-        setIsListening(true);
-        setVoiceStatus('Listening... Speak now, click mic to transcribe');
-      };
-
-      // Real-time interim preview via Web Speech API if supported in browser
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        try {
-          const recognition = new SpeechRecognition();
-          recognition.continuous = true;
-          recognition.interimResults = true;
-          recognition.lang = 'en-US';
-          recognition.onresult = (e: any) => {
-            const transcript = Array.from(e.results)
-              .map((r: any) => r[0].transcript)
-              .join('');
-            if (transcript) {
-              interimTranscriptRef.current = transcript.trim();
-              setInputText(transcript);
-            }
-          };
-          recognition.onerror = () => {};
-          recognition.start();
-          recognitionRef.current = recognition;
-        } catch (_) {}
-      }
-
-      mediaRecorder.start(200);
-    } catch (err: any) {
-      console.error('Microphone access failed:', err);
-      setIsListening(false);
-      setVoiceStatus('Microphone permission denied or unavailable');
-      setTimeout(() => setVoiceStatus(null), 3500);
-    }
-  };
-
   const stopRecording = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch (_) {}
+      audioContextRef.current = null;
+    }
+    setAudioVolume(0);
+
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -152,6 +118,13 @@ export const ChatTab: React.FC = () => {
 
     const mediaRecorder = mediaRecorderRef.current;
 
+    // Flush any pending data in media recorder
+    try {
+      if (mediaRecorder.state !== 'inactive') {
+        mediaRecorder.requestData();
+      }
+    } catch (_) {}
+
     mediaRecorder.onstop = async () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
@@ -163,10 +136,10 @@ export const ChatTab: React.FC = () => {
           type: mediaRecorder.mimeType || 'audio/webm',
         });
 
-        // Guard against micro-clicks / empty recordings
-        if (audioBlob.size < 400 && !interimTranscriptRef.current) {
+        // If blob is totally empty and no speech was heard
+        if (audioBlob.size === 0 && !interimTranscriptRef.current) {
           setIsTranscribing(false);
-          setVoiceStatus('Audio was too short. Speak and click mic to transcribe.');
+          setVoiceStatus('No audio recorded. Click mic and speak clearly.');
           setTimeout(() => setVoiceStatus(null), 3000);
           return;
         }
@@ -231,7 +204,126 @@ export const ChatTab: React.FC = () => {
       }
     };
 
-    mediaRecorder.stop();
+    try {
+      mediaRecorder.stop();
+    } catch (_) {}
+  };
+
+  const startRecording = async () => {
+    try {
+      setVoiceStatus('Accessing microphone...');
+      interimTranscriptRef.current = '';
+      hasSpokenRef.current = false;
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const candidateMimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+        'audio/ogg',
+        'audio/wav',
+      ];
+      const mimeType = candidateMimeTypes.find((type) => MediaRecorder.isTypeSupported(type)) || '';
+
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstart = () => {
+        setIsListening(true);
+        setVoiceStatus('Listening... Speak now (auto-stops on silence)');
+      };
+
+      // Audio volume metering & Voice Activity Detection (VAD)
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const audioCtx = new AudioCtx();
+          audioContextRef.current = audioCtx;
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          analyserRef.current = analyser;
+          const source = audioCtx.createMediaStreamSource(stream);
+          source.connect(analyser);
+
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+          const checkVolume = () => {
+            if (!analyserRef.current) return;
+            analyserRef.current.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+              sum += dataArray[i];
+            }
+            const avg = sum / dataArray.length;
+            const vol = Math.min(100, Math.round((avg / 128) * 100));
+            setAudioVolume(vol);
+
+            // Voice Activity Detection (auto-stop 1.3s after speech ends)
+            if (vol > 15) {
+              hasSpokenRef.current = true;
+              if (silenceTimerRef.current) {
+                clearTimeout(silenceTimerRef.current);
+                silenceTimerRef.current = null;
+              }
+            } else if (hasSpokenRef.current) {
+              if (!silenceTimerRef.current) {
+                silenceTimerRef.current = setTimeout(() => {
+                  stopRecording();
+                }, 1300);
+              }
+            }
+
+            animationFrameRef.current = requestAnimationFrame(checkVolume);
+          };
+          checkVolume();
+        }
+      } catch (audioErr) {
+        console.warn('AudioContext metering setup skipped:', audioErr);
+      }
+
+      // Real-time interim preview via Web Speech API if supported in browser
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+          recognition.onresult = (e: any) => {
+            const transcript = Array.from(e.results)
+              .map((r: any) => r[0].transcript)
+              .join('');
+            if (transcript) {
+              interimTranscriptRef.current = transcript.trim();
+              setInputText(transcript);
+            }
+          };
+          recognition.onerror = () => {};
+          recognition.start();
+          recognitionRef.current = recognition;
+        } catch (_) {}
+      }
+
+      mediaRecorder.start(200);
+    } catch (err: any) {
+      console.error('Microphone access failed:', err);
+      setIsListening(false);
+      setVoiceStatus('Microphone permission denied or unavailable');
+      setTimeout(() => setVoiceStatus(null), 3500);
+    }
   };
 
   const toggleRecording = () => {
@@ -404,17 +496,52 @@ export const ChatTab: React.FC = () => {
       </div>
 
       {/* VOICE STATUS BANNER */}
-      {voiceStatus && (
-        <div className={`mt-2 px-3 py-1.5 rounded-lg text-xs flex items-center space-x-2 border transition ${
+      {(voiceStatus || isListening) && (
+        <div className={`mt-2 px-3 py-1.5 rounded-lg text-xs flex items-center justify-between border transition ${
           isListening
             ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
             : isTranscribing
             ? 'bg-sky-500/10 border-sky-500/30 text-sky-300'
             : 'bg-slate-800/80 border-white/10 text-slate-300'
         }`}>
-          {isListening && <Radio size={14} className="animate-pulse text-rose-400 shrink-0" />}
-          {isTranscribing && <Loader2 size={14} className="animate-spin text-sky-400 shrink-0" />}
-          <span className="truncate">{voiceStatus}</span>
+          <div className="flex items-center space-x-2 truncate">
+            {isListening && (
+              <div className="flex items-center space-x-1 shrink-0">
+                <Radio size={14} className="animate-pulse text-rose-400" />
+                {/* Live audio volume wave meter */}
+                <div className="flex items-end space-x-0.5 h-3 px-1">
+                  <div
+                    className="w-1 bg-rose-400 rounded-full transition-all duration-75"
+                    style={{ height: `${Math.max(3, Math.min(12, Math.round(audioVolume * 0.15)))}px` }}
+                  />
+                  <div
+                    className="w-1 bg-rose-400 rounded-full transition-all duration-75"
+                    style={{ height: `${Math.max(4, Math.min(14, Math.round(audioVolume * 0.25)))}px` }}
+                  />
+                  <div
+                    className="w-1 bg-rose-400 rounded-full transition-all duration-75"
+                    style={{ height: `${Math.max(3, Math.min(12, Math.round(audioVolume * 0.2)))}px` }}
+                  />
+                  <div
+                    className="w-1 bg-rose-400 rounded-full transition-all duration-75"
+                    style={{ height: `${Math.max(2, Math.min(10, Math.round(audioVolume * 0.1)))}px` }}
+                  />
+                </div>
+              </div>
+            )}
+            {isTranscribing && <Loader2 size={14} className="animate-spin text-sky-400 shrink-0" />}
+            <span className="truncate">{voiceStatus || 'Listening to microphone...'}</span>
+          </div>
+
+          {isListening && (
+            <button
+              type="button"
+              onClick={stopRecording}
+              className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 transition shrink-0"
+            >
+              Done / Stop
+            </button>
+          )}
         </div>
       )}
 
@@ -432,7 +559,7 @@ export const ChatTab: React.FC = () => {
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder={isListening ? "Listening to your voice..." : isTranscribing ? "Transcribing speech with Whisper..." : "Give a command (e.g. 'I am leaving home', 'make it cozy')..."}
+              placeholder={isListening ? "Listening to your voice (speak now)..." : isTranscribing ? "Transcribing speech with Whisper AI..." : "Give a command or click mic to speak..."}
               className={`w-full bg-slate-900/90 text-xs text-white placeholder-slate-400 rounded-xl px-3.5 py-2.5 border transition pr-10 ${
                 isListening ? 'border-rose-500/60 ring-1 ring-rose-500/40' : 'border-white/15 focus:outline-none focus:border-sky-400'
               }`}
@@ -446,7 +573,7 @@ export const ChatTab: React.FC = () => {
                 isTranscribing
                   ? 'text-sky-400 cursor-wait'
                   : isListening
-                  ? 'text-rose-400 bg-rose-500/20 animate-pulse'
+                  ? 'text-rose-400 bg-rose-500/20 animate-pulse ring-1 ring-rose-500/50'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
               title={isListening ? "Click to stop & transcribe with Whisper" : "Click to speak via Whisper AI voice input"}
