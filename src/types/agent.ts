@@ -45,7 +45,7 @@ export interface PlanStep {
   isEssential: boolean;
   isBlockedByInvariant?: boolean;
   invariantViolationMessage?: string;
-  riskSeverity?: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  riskSeverity?: 'NONE' | 'INFO' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   approved?: boolean;
 }
 
