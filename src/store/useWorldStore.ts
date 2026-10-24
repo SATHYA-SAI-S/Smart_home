@@ -68,6 +68,11 @@ interface WorldStoreState {
   isRoomOccupied: (roomId: string) => boolean;
 }
 
+export const isPersonInPool = (position: [number, number, number]): boolean => {
+  const [px, , pz] = position;
+  return px >= 8.2 && px <= 14.0 && pz >= 10.5 && pz <= 16.8;
+};
+
 export const useWorldStore = create<WorldStoreState>((set, get) => ({
   rooms: INITIAL_ROOMS,
   devices: INITIAL_DEVICES,
@@ -202,16 +207,21 @@ export const useWorldStore = create<WorldStoreState>((set, get) => ({
       const [px, , pz] = person.position;
       let matchingRoomId = 'lawn'; // default outdoor fallback
 
-      for (const room of rooms) {
-        const { min, max } = room.bounds;
-        if (
-          px >= min[0] &&
-          px <= max[0] &&
-          pz >= min[2] &&
-          pz <= max[2]
-        ) {
-          matchingRoomId = room.id;
-          break;
+      if (isPersonInPool(person.position)) {
+        matchingRoomId = 'pool';
+      } else {
+        for (const room of rooms) {
+          if (room.id === 'lawn' || room.id === 'pool') continue;
+          const { min, max } = room.bounds;
+          if (
+            px >= min[0] &&
+            px <= max[0] &&
+            pz >= min[2] &&
+            pz <= max[2]
+          ) {
+            matchingRoomId = room.id;
+            break;
+          }
         }
       }
 
@@ -239,3 +249,7 @@ export const useWorldStore = create<WorldStoreState>((set, get) => ({
     return get().people.some((p) => p.currentRoom === roomId);
   },
 }));
+
+if (typeof window !== 'undefined') {
+  (window as any).__WORLD_STORE__ = useWorldStore;
+}

@@ -33,7 +33,8 @@ export type DeviceType =
   | 'main_switch'
   | 'safety_sensor'
   | 'gas_valve'
-  | 'siren';
+  | 'siren'
+  | 'pool_filter';
 
 export interface DeviceState {
   power?: 'on' | 'off';

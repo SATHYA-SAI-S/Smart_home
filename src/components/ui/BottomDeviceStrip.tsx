@@ -8,17 +8,21 @@ import {
   Flame, 
   Zap, 
   ThermometerSnowflake, 
-  Video 
+  Video,
+  Waves
 } from 'lucide-react';
-import { useWorldStore } from '../../store/useWorldStore';
+import { useWorldStore, isPersonInPool } from '../../store/useWorldStore';
+import { useAgentStore } from '../../store/useAgentStore';
 
 export const BottomDeviceStrip: React.FC = () => {
   const [selectedRoomFilter, setSelectedRoomFilter] = useState<string>('all');
   const devices = useWorldStore((state) => state.devices);
+  const people = useWorldStore((state) => state.people);
   const rooms = useWorldStore((state) => state.rooms);
   const updateDeviceState = useWorldStore((state) => state.updateDeviceState);
   const setDoorLocked = useWorldStore((state) => state.setDoorLocked);
   const doors = useWorldStore((state) => state.doors);
+  const addMessage = useAgentStore((state) => state.addMessage);
 
   const filteredDevices = devices.filter(
     (d) => selectedRoomFilter === 'all' || d.room === selectedRoomFilter
@@ -34,7 +38,24 @@ export const BottomDeviceStrip: React.FC = () => {
       }
     } else {
       const nextPower = dev.state.power === 'on' ? 'off' : 'on';
-      updateDeviceState(dev.id, { power: nextPower });
+
+      // Swimmer Safety Interlock Check for Pool Filter
+      if (dev.id === 'pool_filter' && nextPower === 'on') {
+        const swimmers = people.filter(
+          (p) => p.currentRoom === 'pool' || isPersonInPool(p.position)
+        );
+        if (swimmers.length > 0) {
+          const names = swimmers.map((p) => p.name).join(', ');
+          addMessage({
+            sender: 'agent',
+            text: `SAFETY INTERLOCK VIOLATION: Cannot turn on swimming pool filter switch while swimmer(s) [${names}] are inside the swimming pool! High suction and electrical shock hazard.`,
+            isComplete: true,
+          });
+          return;
+        }
+      }
+
+      updateDeviceState(dev.id, { power: nextPower, filtering: nextPower === 'on' });
     }
   };
 
@@ -58,6 +79,8 @@ export const BottomDeviceStrip: React.FC = () => {
         );
       case 'camera':
         return <Video size={12} className={dev.state.power === 'on' ? 'text-emerald-400' : 'text-slate-500'} />;
+      case 'pool_filter':
+        return <Waves size={12} className={dev.state.power === 'on' ? 'text-cyan-400 animate-pulse' : 'text-slate-500'} />;
       default:
         return <Zap size={12} className={dev.state.power === 'on' ? 'text-amber-400' : 'text-slate-500'} />;
     }

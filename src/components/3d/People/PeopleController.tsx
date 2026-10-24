@@ -46,6 +46,7 @@ const STATIC_OBSTACLES: ObstacleBox[] = [
   { minX: -9.5, maxX: -6.0, minZ: 9.8, maxZ: 14.5 }, // Garage Car
   { minX: -11.8, maxX: -10.8, minZ: 10.0, maxZ: 14.0 }, // Garage Workbench
   { minX: 2.0, maxX: 3.0, minZ: 8.9, maxZ: 9.9 }, // Clown Sudharshini
+  { minX: 13.7, maxX: 14.5, minZ: 13.1, maxZ: 14.1 }, // Pool Filter Pump Box
   // Front fence segments
   { minX: -14.0, maxX: -0.3, minZ: 19.6, maxZ: 20.2 },
   { minX: 2.3, maxX: 16.0, minZ: 19.6, maxZ: 20.2 },
@@ -88,6 +89,8 @@ export const PeopleController: React.FC = () => {
             floorHeight = progress * 3.0;
           } else if (px >= 6.2 && px <= 13.8 && pz >= 0.2 && pz <= 7.8 && currentY >= 1.5) {
             floorHeight = 3.0;
+          } else if (px >= 8.7 && px <= 13.5 && pz >= 10.9 && pz <= 16.3) {
+            floorHeight = -0.5;
           }
           if (currentY <= floorHeight + 0.1) {
             velocityY.current = 5.2; // Vertical jump launch impulse
@@ -230,6 +233,8 @@ export const PeopleController: React.FC = () => {
         floorHeight = progress * 3.0;
       } else if (px >= 6.2 && px <= 13.8 && pz >= 0.2 && pz <= 7.8 && py >= 1.5) {
         floorHeight = 3.0;
+      } else if (px >= 8.7 && px <= 13.5 && pz >= 10.9 && pz <= 16.3) {
+        floorHeight = -0.5; // Submerged in pool water!
       }
 
       // Auto-open unlocked doors when the avatar approaches

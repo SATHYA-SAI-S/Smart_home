@@ -101,6 +101,7 @@ export interface DeclarativeRule {
     | 'sleep_egress_lighting'
     | 'perimeter_open'
     | 'camera_privacy'
+    | 'hazard_swimmer_filtration'
     | 'custom';
   parameters?: Record<string, any>;
   explanation: string;

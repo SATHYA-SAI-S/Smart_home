@@ -187,6 +187,33 @@ export class PolicyEngine {
         return { violated: false };
       },
     },
+    {
+      id: 'invariant_pool_filter_occupancy',
+      name: 'Prohibit Swimming Pool Filtration While Swimmer Present',
+      description: 'The swimming pool filtering process switch cannot be turned on when any person is inside the swimming pool.',
+      check: (_, step, world) => {
+        const isPoolFilter = step.deviceId === 'pool_filter' || step.deviceType === 'pool_filter';
+        const turnsOn = step.targetState.power === 'on' || step.targetState.filtering === true;
+
+        if (isPoolFilter && turnsOn) {
+          // Check if any person is in the swimming pool
+          const swimmers = world.people.filter((p: PersonEntity) => {
+            if (p.currentRoom === 'pool') return true;
+            const [px, , pz] = p.position;
+            return px >= 8.2 && px <= 14.0 && pz >= 10.5 && pz <= 16.8;
+          });
+
+          if (swimmers.length > 0) {
+            const names = swimmers.map((p: PersonEntity) => p.name).join(', ');
+            return {
+              violated: true,
+              reason: `CRITICAL INVARIANT VIOLATION: Cannot turn on swimming pool filtering process switch! Swimmer(s) [${names}] are currently inside the swimming pool. High risk of mechanical suction entrapment and electrical shock.`,
+            };
+          }
+        }
+        return { violated: false };
+      },
+    },
   ];
 
   /**
@@ -434,6 +461,33 @@ export class PolicyEngine {
               score,
             });
           }
+        }
+      }
+
+      // 4. Swimmer in Pool with Active Filtration
+      if (rule.conditionType === 'hazard_swimmer_filtration') {
+        const poolFilter = world.devices.find((d) => d.id === 'pool_filter');
+        const isFilterOn = poolFilter?.state.power === 'on';
+        const swimmers = world.people.filter((p) => {
+          if (p.currentRoom === 'pool') return true;
+          const [px, , pz] = p.position;
+          return px >= 8.2 && px <= 14.0 && pz >= 10.5 && pz <= 16.8;
+        });
+
+        if (isFilterOn && swimmers.length > 0) {
+          const names = swimmers.map((p) => p.name).join(', ');
+          findings.push({
+            id: `risk_${rule.id}_swimmer_danger`,
+            ruleId: rule.id,
+            severity: 'CRITICAL',
+            title: 'Swimmer Filtration Entrapment Hazard',
+            explanation: rule.explanation,
+            evidence: `Pool filter is actively pumping while [${names}] is in the swimming pool.`,
+            suggestedFix: rule.suggestedFix,
+            score: 10.0,
+            affectedDevices: [poolFilter!.id],
+            affectedPeople: swimmers.map((p) => p.name),
+          });
         }
       }
     }
