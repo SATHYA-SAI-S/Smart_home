@@ -388,6 +388,33 @@ export const Furniture: React.FC = () => {
           </mesh>
         </group>
 
+        {/* Modern Ceramic Toilet */}
+        <group position={[-2.8, 0, 1.2]} rotation={[0, Math.PI / 2, 0]}>
+          {/* Toilet Base Bowl */}
+          <mesh position={[0, 0.22, 0.15]} castShadow receiveShadow material={porcelain}>
+            <cylinderGeometry args={[0.2, 0.16, 0.44, 20]} />
+          </mesh>
+          <mesh position={[0, 0.42, 0.22]} castShadow material={porcelain}>
+            <sphereGeometry args={[0.22, 20, 20]} />
+          </mesh>
+          {/* Toilet Water Tank */}
+          <mesh position={[0, 0.55, -0.16]} castShadow material={porcelain}>
+            <boxGeometry args={[0.42, 0.55, 0.24]} />
+          </mesh>
+          {/* Tank Lid */}
+          <mesh position={[0, 0.84, -0.16]} material={porcelain}>
+            <boxGeometry args={[0.45, 0.05, 0.26]} />
+          </mesh>
+          {/* Dual Chrome Flush Buttons */}
+          <mesh position={[0, 0.87, -0.16]} material={chrome}>
+            <cylinderGeometry args={[0.035, 0.035, 0.02, 16]} />
+          </mesh>
+          {/* Toilet Seat & Lid */}
+          <mesh position={[0, 0.45, 0.2]} material={porcelain}>
+            <boxGeometry args={[0.38, 0.04, 0.44]} />
+          </mesh>
+        </group>
+
         {/* Tankless Water Heater on North Wall */}
         <group position={[-2.8, 1.8, -3.6]}>
           <mesh castShadow material={porcelain}>
@@ -418,7 +445,7 @@ export const Furniture: React.FC = () => {
           {/* Dark Tinted Windshield & Windows */}
           <mesh position={[0, 0.85, 0.9]} rotation={[0.45, 0, 0]}>
             <planeGeometry args={[1.8, 0.65]} />
-            <meshStandardMaterial color="#020617" roughness={0.1} />
+            <meshStandardMaterial color="#0f172a" roughness={0.1} />
           </mesh>
           {/* 4 Wheels */}
           {[-1.15, 1.15].map((x, xi) =>
@@ -468,9 +495,9 @@ export const Furniture: React.FC = () => {
       </group>
 
       {/* ========================================================= */}
-      {/* TERRACE FURNITURE                                         */}
+      {/* TERRACE FURNITURE (1st Floor Y = 3.0)                     */}
       {/* ========================================================= */}
-      <group position={[10.0, 0, 4.0]}>
+      <group position={[10.0, 3.0, 4.0]}>
         {/* Outdoor Patio Dining Table */}
         <mesh position={[0, 0.4, 0]} castShadow receiveShadow material={woodFurniture}>
           <cylinderGeometry args={[0.65, 0.65, 0.05, 24]} />

@@ -14,6 +14,9 @@ export const CameraController: React.FC = () => {
   const people = useWorldStore((state) => state.people);
   const rooms = useWorldStore((state) => state.rooms);
   const fov = useWorldStore((state) => state.fov);
+  const thirdPersonYaw = useWorldStore((state) => state.thirdPersonYaw);
+  const thirdPersonPitch = useWorldStore((state) => state.thirdPersonPitch);
+  const { gl } = useThree();
 
   const currentLookAt = useRef(new THREE.Vector3(0, 1, 4));
 
@@ -25,6 +28,59 @@ export const CameraController: React.FC = () => {
     }
   }, [fov, camera]);
 
+  // Smooth mouse look everywhere in 3rd person (360° horizontal + full vertical pitch)
+  useEffect(() => {
+    const canvas = gl.domElement;
+    let isMouseDown = false;
+    let prevX = 0;
+    let prevY = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (useWorldStore.getState().cameraMode !== 'person') return;
+      isMouseDown = true;
+      prevX = e.clientX;
+      prevY = e.clientY;
+      if (e.button === 0 && document.pointerLockElement !== canvas) {
+        canvas.requestPointerLock?.();
+      }
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (useWorldStore.getState().cameraMode !== 'person') return;
+      const isLocked = document.pointerLockElement === canvas;
+      if (!isLocked && !isMouseDown) return;
+
+      const movementX = isLocked ? e.movementX : e.clientX - prevX;
+      const movementY = isLocked ? e.movementY : e.clientY - prevY;
+      prevX = e.clientX;
+      prevY = e.clientY;
+
+      const sens = 0.0035;
+      const state = useWorldStore.getState();
+      state.setThirdPersonYaw(state.thirdPersonYaw - movementX * sens);
+      state.setThirdPersonPitch(
+        THREE.MathUtils.clamp(state.thirdPersonPitch + movementY * sens, -0.25, 1.25)
+      );
+    };
+
+    const onPointerUp = () => {
+      isMouseDown = false;
+    };
+
+    canvas.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+
+    return () => {
+      canvas.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      if (document.pointerLockElement === canvas) {
+        document.exitPointerLock?.();
+      }
+    };
+  }, [gl]);
+
   useFrame((_, delta) => {
     const controlledPerson = people.find((p) => p.id === selectedPersonId);
     const selectedRoom = rooms.find((r) => r.id === selectedRoomId) || rooms[0];
@@ -33,32 +89,54 @@ export const CameraController: React.FC = () => {
     let targetLookAt = new THREE.Vector3(0, 1, 4);
 
     if (cameraMode === 'person' && controlledPerson) {
-      let eyeHeight = 1.62;
-      if (controlledPerson.attributes.ageGroup === 'elderly') eyeHeight = 1.50;
-      if (controlledPerson.attributes.ageGroup === 'child') eyeHeight = 1.05;
-
       const px = controlledPerson.position[0];
+      const py = controlledPerson.position[1];
       const pz = controlledPerson.position[2];
 
-      targetCamPos.set(px, eyeHeight, pz);
+      // Spherical 3rd Person follow camera around avatar (360° yaw, smooth vertical pitch)
+      const followDist = 3.2;
+      const targetY = py + 1.25;
 
-      // Look direction from rotationY
-      const lookDist = 5.0;
-      const lx = px + Math.sin(controlledPerson.rotationY) * lookDist;
-      const lz = pz + Math.cos(controlledPerson.rotationY) * lookDist;
-      targetLookAt.set(lx, eyeHeight * 0.95, lz);
+      const horizontalDist = followDist * Math.cos(thirdPersonPitch);
+      const verticalOffset = followDist * Math.sin(thirdPersonPitch);
 
-      // Disable orbit controls in first person
+      let camX = px - Math.sin(thirdPersonYaw) * horizontalDist;
+      let camY = targetY + verticalOffset;
+      let camZ = pz - Math.cos(thirdPersonYaw) * horizontalDist;
+
+      // Keep camera safely above floor
+      if (camY < py + 0.35) camY = py + 0.35;
+
+      // Camera collision prevention: clamp within current room bounds if indoors
+      const currentRoom = rooms.find((r) => r.id === controlledPerson.currentRoom);
+      if (currentRoom && controlledPerson.currentRoom !== 'lawn') {
+        const pad = 0.45;
+        camX = THREE.MathUtils.clamp(
+          camX,
+          currentRoom.bounds.min[0] + pad,
+          currentRoom.bounds.max[0] - pad
+        );
+        camZ = THREE.MathUtils.clamp(
+          camZ,
+          currentRoom.bounds.min[2] + pad,
+          currentRoom.bounds.max[2] - pad
+        );
+      }
+
+      targetCamPos.set(camX, camY, camZ);
+      targetLookAt.set(px, targetY, pz);
+
+      // Disable orbit controls in person view
       if (orbitRef.current) orbitRef.current.enabled = false;
 
-      // Snappier dampening in person view so player doesn't feel floaty lag
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamPos.x, 25, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamPos.y, 25, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamPos.z, 25, delta);
+      // Smooth dampening towards 3rd person follow position
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamPos.x, 16, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamPos.y, 16, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamPos.z, 16, delta);
 
-      currentLookAt.current.x = THREE.MathUtils.damp(currentLookAt.current.x, targetLookAt.x, 25, delta);
-      currentLookAt.current.y = THREE.MathUtils.damp(currentLookAt.current.y, targetLookAt.y, 25, delta);
-      currentLookAt.current.z = THREE.MathUtils.damp(currentLookAt.current.z, targetLookAt.z, 25, delta);
+      currentLookAt.current.x = THREE.MathUtils.damp(currentLookAt.current.x, targetLookAt.x, 18, delta);
+      currentLookAt.current.y = THREE.MathUtils.damp(currentLookAt.current.y, targetLookAt.y, 18, delta);
+      currentLookAt.current.z = THREE.MathUtils.damp(currentLookAt.current.z, targetLookAt.z, 18, delta);
 
       camera.lookAt(currentLookAt.current);
       return;

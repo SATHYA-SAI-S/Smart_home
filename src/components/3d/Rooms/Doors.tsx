@@ -42,8 +42,11 @@ const SingleDoor: React.FC<SingleDoorProps> = ({ door }) => {
   const isTerraceSliding = door.id === 'door_terrace';
   const isRollup = door.id === 'door_garage_exterior';
 
+  // Garage rollup door is handled with full motorized animation in VisualDevices.tsx
+  if (isRollup) return null;
+
   return (
-    <group position={door.position} rotation={[0, door.rotationY, 0]}>
+    <group position={[door.position[0], 0, door.position[2]]} rotation={[0, door.rotationY, 0]}>
       {/* Door frame jambs */}
       <mesh position={[-door.width / 2 - 0.04, 1.1, 0]}>
         <boxGeometry args={[0.08, 2.2, 0.18]} />

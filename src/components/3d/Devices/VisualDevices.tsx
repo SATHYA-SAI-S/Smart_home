@@ -45,10 +45,8 @@ export const VisualDevices: React.FC = () => {
 
   return (
     <group name="visual_devices">
-      {/* ========================================================= */}
-      {/* 3D ROOM BILLBOARD LABELS                                  */}
-      {/* ========================================================= */}
-      {cameraMode !== 'person' &&
+      {/* 3D ROOM BILLBOARD LABELS (Only displayed in top-down floorplan mode) */}
+      {cameraMode === 'top' &&
         rooms.map((room) => {
           const { min, max } = room.bounds;
           const cx = (min[0] + max[0]) / 2;
@@ -104,6 +102,8 @@ export const VisualDevices: React.FC = () => {
                   castShadow
                   shadow-mapSize-width={512}
                   shadow-mapSize-height={512}
+                  shadow-bias={-0.002}
+                  shadow-normalBias={0.04}
                 />
               )}
             </group>

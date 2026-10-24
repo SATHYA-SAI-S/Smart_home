@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useWorldStore } from '../../../store/useWorldStore';
 
@@ -8,19 +8,21 @@ interface ObstacleBox {
   maxX: number;
   minZ: number;
   maxZ: number;
+  minY?: number;
+  maxY?: number;
   doorId?: string;
 }
 
-// Static solid walls & heavy furniture obstacles
+// Comprehensive static solid obstacles (walls, major furniture, fixtures)
 const STATIC_OBSTACLES: ObstacleBox[] = [
   // Exterior walls
   { minX: -12.2, maxX: 6.2, minZ: -8.2, maxZ: -7.8 }, // North outer
   { minX: -12.2, maxX: -11.8, minZ: -8.0, maxZ: 16.0 }, // West outer
   { minX: 5.8, maxX: 6.2, minZ: -8.0, maxZ: 0.0 }, // East bedroom outer
-  // Interior dividing walls (excluding door openings)
+  // Interior dividing walls
   { minX: -4.1, maxX: -3.9, minZ: -8.0, maxZ: -0.2 }, // Bed vs Bath
-  { minX: -4.1, maxX: -3.9, minZ: 0.0, maxZ: 3.4 }, // Hall vs Kitchen (North part)
-  { minX: -4.1, maxX: -3.9, minZ: 4.6, maxZ: 8.0 }, // Hall vs Kitchen (South part)
+  { minX: -4.1, maxX: -3.9, minZ: 0.0, maxZ: 3.4 }, // Hall vs Kitchen (North)
+  { minX: -4.1, maxX: -3.9, minZ: 4.6, maxZ: 8.0 }, // Hall vs Kitchen (South)
   { minX: -12.0, maxX: -8.6, minZ: -0.1, maxZ: 0.1 }, // Bath vs Kitchen (Left)
   { minX: -7.4, maxX: -4.0, minZ: -0.1, maxZ: 0.1 }, // Bath vs Kitchen (Right)
   { minX: -12.0, maxX: -8.6, minZ: 7.9, maxZ: 8.1 }, // Kitchen vs Garage (Left)
@@ -31,15 +33,30 @@ const STATIC_OBSTACLES: ObstacleBox[] = [
   { minX: 1.6, maxX: 6.0, minZ: 7.9, maxZ: 8.1 }, // Hall South exterior (Right)
   { minX: 5.8, maxX: 6.2, minZ: 0.0, maxZ: 3.0 }, // Hall to Terrace (North)
   { minX: 5.8, maxX: 6.2, minZ: 5.0, maxZ: 8.0 }, // Hall to Terrace (South)
-  // Major furniture collision
-  { minX: -1.0, maxX: 3.0, minZ: -5.0, maxZ: -2.7 }, // King Bed
-  { minX: -11.8, maxX: -10.0, minZ: 1.0, maxZ: 7.0 }, // Kitchen counter
-  { minX: -8.0, maxX: -6.0, minZ: 3.0, maxZ: 5.0 }, // Kitchen island
-  { minX: 0.0, maxX: 3.2, minZ: 4.6, maxZ: 6.2 }, // Hall couch
-  { minX: -9.5, maxX: -6.5, minZ: 10.0, maxZ: 14.5 }, // Garage Car
+  // Major furniture & fixture obstacles
+  { minX: -0.5, maxX: 2.5, minZ: -5.5, maxZ: -2.7 }, // King Bed
+  { minX: 4.2, maxX: 5.8, minZ: -4.5, maxZ: -1.5 }, // Bedroom Dresser
+  { minX: -0.5, maxX: 2.8, minZ: 4.5, maxZ: 6.2 }, // Hall couch
+  { minX: -0.5, maxX: 2.5, minZ: 0.2, maxZ: 0.8 }, // Hall TV console
+  { minX: -11.8, maxX: -9.8, minZ: 0.8, maxZ: 7.2 }, // Kitchen counter & Refrigerator
+  { minX: -8.2, maxX: -6.0, minZ: 2.8, maxZ: 5.2 }, // Kitchen island
+  { minX: -11.8, maxX: -10.0, minZ: -2.5, maxZ: -0.5 }, // Bathroom Vanity & Sink
+  { minX: -11.8, maxX: -10.0, minZ: -4.5, maxZ: -2.8 }, // Bathroom Toilet
+  { minX: -6.5, maxX: -4.2, minZ: -4.5, maxZ: -2.0 }, // Bathroom Shower
+  { minX: -9.5, maxX: -6.0, minZ: 9.8, maxZ: 14.5 }, // Garage Car
+  { minX: -11.8, maxX: -10.8, minZ: 10.0, maxZ: 14.0 }, // Garage Workbench
+  { minX: 2.0, maxX: 3.0, minZ: 8.9, maxZ: 9.9 }, // Clown Sudharshini
+  // Front fence segments
+  { minX: -14.0, maxX: -0.3, minZ: 19.6, maxZ: 20.2 },
+  { minX: 2.3, maxX: 16.0, minZ: 19.6, maxZ: 20.2 },
+  // 1st Floor Terrace perimeter railings (only when elevated Y >= 2.0)
+  { minX: 13.6, maxX: 14.2, minZ: 0.0, maxZ: 8.0, minY: 2.0, maxY: 6.0 },
+  { minX: 6.0, maxX: 14.0, minZ: -0.2, maxZ: 0.3, minY: 2.0, maxY: 6.0 },
+  { minX: 7.6, maxX: 14.0, minZ: 7.7, maxZ: 8.1, minY: 2.0, maxY: 6.0 },
 ];
 
 export const PeopleController: React.FC = () => {
+  const { camera } = useThree();
   const people = useWorldStore((state) => state.people);
   const selectedPersonId = useWorldStore((state) => state.selectedPersonId);
   const updatePersonPosition = useWorldStore((state) => state.updatePersonPosition);
@@ -49,17 +66,40 @@ export const PeopleController: React.FC = () => {
 
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const controlledYaw = useRef<number>(0);
+  const velocityY = useRef<number>(0);
+  const isJumping = useRef<boolean>(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysPressed.current[e.key.toLowerCase()] = true;
+      const key = e.key.toLowerCase();
+      keysPressed.current[key] = true;
 
-      // 'E' Key: Interact with nearest door
-      if (e.key.toLowerCase() === 'e') {
+      // Space: Jump
+      if (e.code === 'Space' || key === ' ') {
+        const controlled = people.find((p) => p.id === selectedPersonId);
+        if (controlled) {
+          const currentY = controlled.position[1];
+          // Check ground elevation
+          const [px, , pz] = controlled.position;
+          let floorHeight = 0;
+          if (px >= 6.2 && px <= 7.6 && pz >= 7.8 && pz <= 11.8) {
+            const progress = THREE.MathUtils.clamp((11.6 - pz) / (11.6 - 7.9), 0, 1);
+            floorHeight = progress * 3.0;
+          } else if (px >= 6.2 && px <= 13.8 && pz >= 0.2 && pz <= 7.8 && currentY >= 1.5) {
+            floorHeight = 3.0;
+          }
+          if (currentY <= floorHeight + 0.1) {
+            velocityY.current = 5.2; // Vertical jump launch impulse
+            isJumping.current = true;
+          }
+        }
+      }
+
+      // 'F' or 'E' Key: Interact with nearest door
+      if (key === 'f' || (key === 'e' && cameraMode !== 'person')) {
         const controlled = people.find((p) => p.id === selectedPersonId);
         if (controlled) {
           const [px, , pz] = controlled.position;
-          // Find nearest door within 2.0 meters
           let nearestDoorId = '';
           let nearestDist = 2.0;
 
@@ -79,7 +119,8 @@ export const PeopleController: React.FC = () => {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      keysPressed.current[e.key.toLowerCase()] = false;
+      const key = e.key.toLowerCase();
+      keysPressed.current[key] = false;
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -91,10 +132,13 @@ export const PeopleController: React.FC = () => {
     };
   }, [people, selectedPersonId, doors, toggleDoor]);
 
-  // Collision detection checking static obstacles AND closed doors
-  const checkCollision = (x: number, z: number, radius = 0.3): boolean => {
+  // Collision detection checking obstacles and closed doors with sliding
+  const checkCollision = (x: number, z: number, y = 0, radius = 0.32): boolean => {
     // 1. Check static obstacles
     for (const obs of STATIC_OBSTACLES) {
+      if (obs.minY !== undefined && y < obs.minY) continue;
+      if (obs.maxY !== undefined && y > obs.maxY) continue;
+
       if (
         x + radius >= obs.minX &&
         x - radius <= obs.maxX &&
@@ -111,7 +155,6 @@ export const PeopleController: React.FC = () => {
         const dx = door.position[0];
         const dz = door.position[2];
         const halfW = door.width / 2;
-        // Bounding box for closed door
         const minX = dx - (door.rotationY === 0 ? halfW : 0.15);
         const maxX = dx + (door.rotationY === 0 ? halfW : 0.15);
         const minZ = dz - (door.rotationY === 0 ? 0.15 : halfW);
@@ -131,65 +174,115 @@ export const PeopleController: React.FC = () => {
     return false;
   };
 
+  const thirdPersonYaw = useWorldStore((state) => state.thirdPersonYaw);
+  const setThirdPersonYaw = useWorldStore((state) => state.setThirdPersonYaw);
+  const cameraMode = useWorldStore((state) => state.cameraMode);
+
   useFrame((_, delta) => {
-    // 1. CONTROLLED PERSON UPDATE
+    // 1. ROTATION CONTROLS (Q / E) IN 3RD PERSON VIEW
+    if (cameraMode === 'person') {
+      if (keysPressed.current['q']) {
+        setThirdPersonYaw(thirdPersonYaw - 2.2 * delta);
+      }
+      if (keysPressed.current['e']) {
+        setThirdPersonYaw(thirdPersonYaw + 2.2 * delta);
+      }
+    }
+
+    // 2. CONTROLLED PERSON UPDATE
     const controlledPerson = people.find((p) => p.id === selectedPersonId);
     if (controlledPerson) {
-      let moveX = 0;
-      let moveZ = 0;
-
       const forward = keysPressed.current['w'] || keysPressed.current['arrowup'];
       const backward = keysPressed.current['s'] || keysPressed.current['arrowdown'];
       const left = keysPressed.current['a'] || keysPressed.current['arrowleft'];
       const right = keysPressed.current['d'] || keysPressed.current['arrowright'];
 
-      // Yaw rotation with Q/E or smooth arrow turning if not using mouse
-      if (keysPressed.current['q']) controlledYaw.current += delta * 2.5;
-      if (keysPressed.current['e'] && !keysPressed.current['w']) controlledYaw.current -= delta * 2.5;
+      // Extract camera's planar forward & right vectors directly from real-time camera view orientation
+      // In Three.js: (0, 0, -1) is camera forward (into screen), (1, 0, 0) is camera right (right of screen)
+      const camForward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      camForward.y = 0;
+      if (camForward.lengthSq() > 0.0001) camForward.normalize();
 
-      if (forward) moveZ -= 1;
-      if (backward) moveZ += 1;
-      if (left) moveX -= 1;
-      if (right) moveX += 1;
+      const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      camRight.y = 0;
+      if (camRight.lengthSq() > 0.0001) camRight.normalize();
 
-      const isMoving = moveX !== 0 || moveZ !== 0;
+      let inputForward = 0;
+      let inputRight = 0;
+      if (forward) inputForward += 1;
+      if (backward) inputForward -= 1;
+      if (right) inputRight += 1;
+      if (left) inputRight -= 1;
+
+      const moveVec = new THREE.Vector3();
+      moveVec.addScaledVector(camForward, inputForward);
+      moveVec.addScaledVector(camRight, inputRight);
+
+      const isMoving = moveVec.lengthSq() > 0.001;
+
+      const [px, py, pz] = controlledPerson.position;
+
+      // Calculate floor height (Ground = 0, Staircase = ramp 0 to 3.0, 1st-floor Terrace = 3.0)
+      let floorHeight = 0;
+      if (px >= 6.2 && px <= 7.6 && pz >= 7.8 && pz <= 11.8) {
+        const progress = THREE.MathUtils.clamp((11.6 - pz) / (11.6 - 7.9), 0, 1);
+        floorHeight = progress * 3.0;
+      } else if (px >= 6.2 && px <= 13.8 && pz >= 0.2 && pz <= 7.8 && py >= 1.5) {
+        floorHeight = 3.0;
+      }
+
+      // Gravity & Jumping physics
+      velocityY.current -= 15.0 * delta;
+      let nextY = py + velocityY.current * delta;
+      if (nextY <= floorHeight) {
+        nextY = floorHeight;
+        velocityY.current = 0;
+        isJumping.current = false;
+      }
+
+      let nextX = px;
+      let nextZ = pz;
+      let facingAngle = controlledPerson.rotationY;
 
       if (isMoving) {
-        // Normalize movement vector
-        const length = Math.hypot(moveX, moveZ);
-        const normX = moveX / length;
-        const normZ = moveZ / length;
-
-        // Rotate movement vector according to yaw
-        const sin = Math.sin(controlledYaw.current);
-        const cos = Math.cos(controlledYaw.current);
-        const worldMoveX = normX * cos + normZ * sin;
-        const worldMoveZ = -normX * sin + normZ * cos;
-
-        // Facing direction rotation
-        const facingAngle = Math.atan2(worldMoveX, worldMoveZ);
+        moveVec.normalize();
+        // Turn avatar smoothly to face direction of movement
+        const targetFacing = Math.atan2(moveVec.x, moveVec.z);
+        // Smooth rotation angle interpolation
+        let diff = targetFacing - facingAngle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        facingAngle += diff * Math.min(1, delta * 15.0);
 
         const speed = controlledPerson.attributes.mobility === 'reduced' ? 2.2 : 3.8;
-        const proposedX = controlledPerson.position[0] + worldMoveX * speed * delta;
-        const proposedZ = controlledPerson.position[2] + worldMoveZ * speed * delta;
+        const proposedX = px + moveVec.x * speed * delta;
+        const proposedZ = pz + moveVec.z * speed * delta;
 
-        let nextX = controlledPerson.position[0];
-        let nextZ = controlledPerson.position[2];
-
-        // Test X axis movement
-        if (!checkCollision(proposedX, nextZ)) {
+        // Sliding collision response
+        const blockedFull = checkCollision(proposedX, proposedZ, nextY, 0.32);
+        if (!blockedFull) {
           nextX = proposedX;
-        }
-        // Test Z axis movement
-        if (!checkCollision(nextX, proposedZ)) {
           nextZ = proposedZ;
+        } else {
+          // Slide along X
+          if (!checkCollision(proposedX, pz, nextY, 0.32)) {
+            nextX = proposedX;
+          }
+          // Slide along Z
+          if (!checkCollision(px, proposedZ, nextY, 0.32)) {
+            nextZ = proposedZ;
+          }
         }
 
-        updatePersonPosition(controlledPerson.id, [nextX, 0, nextZ], facingAngle);
+        updatePersonPosition(controlledPerson.id, [nextX, nextY, nextZ], facingAngle);
         if (controlledPerson.activity !== 'walking') {
           updatePersonActivity(controlledPerson.id, 'walking');
         }
       } else {
+        // Update vertical position even when standing still (falling / landing)
+        if (Math.abs(nextY - py) > 0.001) {
+          updatePersonPosition(controlledPerson.id, [nextX, nextY, nextZ], facingAngle);
+        }
         if (controlledPerson.activity === 'walking') {
           updatePersonActivity(controlledPerson.id, 'idle');
         }

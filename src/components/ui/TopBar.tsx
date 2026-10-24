@@ -35,10 +35,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleHelp }) => {
   const [showFovSlider, setShowFovSlider] = useState(false);
 
   const viewModes: { id: CameraViewMode; label: string; icon: React.ReactNode; hotkey: string }[] = [
-    { id: 'person', label: 'Person View', icon: <Eye size={15} />, hotkey: '1' },
-    { id: 'room', label: 'Room View', icon: <Home size={15} />, hotkey: '2' },
-    { id: 'top', label: 'Top View', icon: <Grid size={15} />, hotkey: '3' },
-    { id: 'orbit', label: 'Orbit View', icon: <Compass size={15} />, hotkey: '4' },
+    { id: 'person', label: '3rd Person', icon: <Eye size={14} />, hotkey: '1' },
+    { id: 'room', label: 'Room Cam', icon: <Home size={14} />, hotkey: '2' },
+    { id: 'top', label: 'Top-Down', icon: <Grid size={14} />, hotkey: '3' },
+    { id: 'orbit', label: 'Orbit 3D', icon: <Compass size={14} />, hotkey: '4' },
   ];
 
   const currentRoomIndex = rooms.findIndex((r) => r.id === selectedRoomId);
@@ -52,88 +52,86 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleHelp }) => {
   };
 
   return (
-    <header className="absolute top-3 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
-      {/* BRAND & LOGO */}
-      <div className="glass-panel px-4 py-2 rounded-2xl flex items-center space-x-3 pointer-events-auto shadow-lg">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md">
-          <ShieldCheck size={20} className="text-white" />
+    <header className="absolute top-3 left-4 right-4 z-20 flex items-center justify-between pointer-events-none gap-3">
+      {/* BRAND & STATUS BADGE */}
+      <div className="glass-panel px-3.5 py-2 rounded-2xl flex items-center space-x-3 pointer-events-auto shadow-2xl transition hover:border-sky-500/30">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
+          <ShieldCheck size={18} className="text-white" />
         </div>
         <div>
-          <div className="text-sm font-bold tracking-tight text-white flex items-center space-x-1.5">
+          <div className="text-xs font-bold tracking-tight text-white flex items-center space-x-1.5">
             <span>SentinelHome</span>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">
-              3D Sandbox
-            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           </div>
-          <div className="text-[11px] text-slate-400 font-medium">Autonomous Safety Engine</div>
+          <div className="text-[10px] text-slate-400 font-medium">Smart Space Simulator</div>
         </div>
       </div>
 
-      {/* VIEW SWITCHER TABS (Hotkeys 1-4) */}
-      <div className="glass-panel p-1.5 rounded-2xl flex items-center space-x-1 pointer-events-auto shadow-lg">
+      {/* VIEW SWITCHER CAPSULE (Hotkeys 1-4) */}
+      <div className="glass-panel p-1 rounded-2xl flex items-center space-x-1 pointer-events-auto shadow-2xl">
         {viewModes.map((v) => {
           const isActive = cameraMode === v.id;
           return (
             <button
               key={v.id}
               onClick={() => setCameraMode(v.id)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold shadow-md shadow-sky-500/25 border border-white/10'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {v.icon}
               <span>{v.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${isActive ? 'bg-sky-600/60 text-sky-100' : 'bg-slate-800 text-slate-400'}`}>
+              <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                isActive ? 'bg-black/30 text-white' : 'bg-slate-800/80 text-slate-400'
+              }`}>
                 {v.hotkey}
               </span>
             </button>
           );
         })}
+
+        {/* ROOM PICKER (In Room Cam Mode) */}
+        {cameraMode === 'room' && (
+          <div className="flex items-center space-x-1 pl-1.5 border-l border-white/10 ml-1">
+            <button
+              onClick={() => cycleRoom('prev')}
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+              title="Previous Room"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <select
+              value={selectedRoomId}
+              onChange={(e) => setSelectedRoomId(e.target.value)}
+              className="bg-slate-900/90 text-xs font-semibold text-sky-400 border border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:border-sky-500 cursor-pointer"
+            >
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => cycleRoom('next')}
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+              title="Next Room"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ROOM SELECTOR (Visible in Room View) */}
-      {cameraMode === 'room' && (
-        <div className="glass-panel px-3 py-1.5 rounded-2xl flex items-center space-x-2 pointer-events-auto animate-fade-in shadow-lg">
-          <button
-            onClick={() => cycleRoom('prev')}
-            className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
-            title="Previous Room"
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          <select
-            value={selectedRoomId}
-            onChange={(e) => setSelectedRoomId(e.target.value)}
-            className="bg-slate-900/90 text-xs font-semibold text-sky-400 border border-slate-700/60 rounded-lg px-2.5 py-1 focus:outline-none focus:border-sky-500 cursor-pointer"
-          >
-            {rooms.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={() => cycleRoom('next')}
-            className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
-            title="Next Room"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
-
-      {/* CONTROLS (Time of Day, Cutaway, FOV, Help) */}
-      <div className="glass-panel px-3.5 py-1.5 rounded-2xl flex items-center space-x-4 pointer-events-auto shadow-lg text-xs">
+      {/* QUICK CONTROLS (Time of Day, Roof, FOV, Help) */}
+      <div className="glass-panel px-3.5 py-1.5 rounded-2xl flex items-center space-x-3 pointer-events-auto shadow-2xl text-xs">
         {/* TIME OF DAY SLIDER */}
         <div className="flex items-center space-x-2">
           {timeOfDay >= 6 && timeOfDay <= 18 ? (
-            <Sun size={15} className="text-amber-400" />
+            <Sun size={14} className="text-amber-400" />
           ) : (
-            <Moon size={15} className="text-sky-300" />
+            <Moon size={14} className="text-sky-300" />
           )}
           <input
             type="range"
@@ -142,9 +140,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleHelp }) => {
             step="0.5"
             value={timeOfDay}
             onChange={(e) => setTimeOfDay(parseFloat(e.target.value))}
-            className="w-20 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-400"
+            className="w-18 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400"
+            title="Adjust Sun / Time of Day"
           />
-          <span className="font-mono text-slate-300 text-[11px] w-10">
+          <span className="font-mono text-slate-300 text-[11px] w-9">
             {Math.floor(timeOfDay).toString().padStart(2, '0')}:
             {((timeOfDay % 1) * 60 === 30 ? '30' : '00')}
           </span>
@@ -153,25 +152,25 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleHelp }) => {
         {/* ROOF CUTAWAY TOGGLE */}
         <button
           onClick={() => setRoofCutaway(!roofCutaway)}
-          className={`px-2.5 py-1 rounded-lg font-medium transition ${
+          className={`px-2.5 py-1 rounded-xl text-xs font-medium transition ${
             roofCutaway
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-              : 'text-slate-400 hover:text-white hover:bg-white/10'
+              ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30 shadow-sm'
+              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
           }`}
           title="Toggle Interior Cutaway Roof"
         >
-          {roofCutaway ? 'Roof Cutaway' : 'Full Roof'}
+          {roofCutaway ? 'Cutaway Roof' : 'Full Roof'}
         </button>
 
-        {/* FOV SLIDER (in Person View) */}
+        {/* FOV SLIDER (in 3rd Person View) */}
         {cameraMode === 'person' && (
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-1.5 border-l border-white/10 pl-2">
             <button
               onClick={() => setShowFovSlider(!showFovSlider)}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
               title="Camera Field of View"
             >
-              <Sliders size={14} />
+              <Sliders size={13} />
             </button>
             {showFovSlider && (
               <div className="flex items-center space-x-1.5">
@@ -181,7 +180,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleHelp }) => {
                   max="95"
                   value={fov}
                   onChange={(e) => setFov(parseInt(e.target.value))}
-                  className="w-16 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                  className="w-14 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400"
                 />
                 <span className="text-[10px] text-slate-400 font-mono">{fov}°</span>
               </div>
@@ -192,10 +191,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleHelp }) => {
         {/* KEYBOARD SHORTCUTS HELP MODAL TOGGLE */}
         <button
           onClick={onToggleHelp}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+          className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
           title="Keyboard Shortcuts Legend"
         >
-          <HelpCircle size={16} />
+          <HelpCircle size={15} />
         </button>
       </div>
     </header>

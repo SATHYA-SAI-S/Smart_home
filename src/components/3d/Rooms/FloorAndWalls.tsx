@@ -75,22 +75,42 @@ export const FloorAndWalls: React.FC = () => {
         if (room.floorTextureType === 'deck') mat = deckMaterial;
         if (room.floorTextureType === 'grass') mat = grassMaterial;
 
+        const isTerrace = room.id === 'terrace';
+        const floorY = isTerrace ? 3.0 : 0.0;
+
         return (
           <group key={`floor_${room.id}`}>
             {/* Main floor slab */}
             <mesh
-              position={[centerX, -0.05, centerZ]}
+              position={[centerX, floorY - 0.05, centerZ]}
               receiveShadow
               material={mat}
             >
               <boxGeometry args={[width, 0.1, depth]} />
             </mesh>
 
-            {/* Subtle floor border frame */}
-            <mesh position={[centerX, -0.01, centerZ]}>
-              <boxGeometry args={[width + 0.04, 0.02, depth + 0.04]} />
+            {/* Foundation floor border frame sitting cleanly beneath floor slab */}
+            <mesh position={[centerX, floorY - 0.07, centerZ]}>
+              <boxGeometry args={[width + 0.04, 0.08, depth + 0.04]} />
               <meshStandardMaterial color="#0f172a" roughness={0.9} />
             </mesh>
+
+            {/* If 1st-floor terrace: support columns underneath */}
+            {isTerrace && (
+              <group>
+                {[
+                  [6.6, 0.5],
+                  [13.4, 0.5],
+                  [6.6, 7.5],
+                  [13.4, 7.5],
+                ].map(([cx, cz], pIdx) => (
+                  <mesh key={`terrace_col_${pIdx}`} position={[cx, 1.45, cz]} castShadow receiveShadow>
+                    <cylinderGeometry args={[0.16, 0.2, 2.9, 16]} />
+                    <meshStandardMaterial color="#334155" roughness={0.5} metalness={0.6} />
+                  </mesh>
+                ))}
+              </group>
+            )}
           </group>
         );
       })}
@@ -172,16 +192,54 @@ export const FloorAndWalls: React.FC = () => {
         <boxGeometry args={[0.2, wallHeight, 3.0]} />
       </mesh>
 
-      {/* Terrace perimeter glass railings */}
-      <mesh position={[13.9, 0.5, 4.0]} material={glassMaterial}>
+      {/* 1st Floor Terrace perimeter glass railings */}
+      <mesh position={[13.9, 3.5, 4.0]} material={glassMaterial}>
         <boxGeometry args={[0.08, 1.0, 7.6]} />
       </mesh>
-      <mesh position={[10.0, 0.5, 0.1]} material={glassMaterial}>
+      <mesh position={[10.0, 3.5, 0.1]} material={glassMaterial}>
         <boxGeometry args={[7.8, 1.0, 0.08]} />
       </mesh>
-      <mesh position={[10.0, 0.5, 7.9]} material={glassMaterial}>
-        <boxGeometry args={[7.8, 1.0, 0.08]} />
+      {/* South railing leaving gap for staircase entrance */}
+      <mesh position={[10.8, 3.5, 7.9]} material={glassMaterial}>
+        <boxGeometry args={[6.2, 1.0, 0.08]} />
       </mesh>
+
+      {/* ========================================================= */}
+      {/* MODERN ARCHITECTURAL STAIRCASE TO 1ST FLOOR TERRACE        */}
+      {/* ========================================================= */}
+      <group position={[6.9, 0, 0]}>
+        {/* 12 Steps rising from ground level (Z = 11.6, Y = 0) to terrace (Z = 7.9, Y = 3.0) */}
+        {Array.from({ length: 12 }).map((_, i) => {
+          const stepY = 0.12 + i * 0.24;
+          const stepZ = 11.6 - i * 0.31;
+          return (
+            <group key={`stair_step_${i}`} position={[0, stepY, stepZ]}>
+              <mesh castShadow receiveShadow material={deckMaterial}>
+                <boxGeometry args={[1.3, 0.06, 0.35]} />
+              </mesh>
+              <mesh position={[0, -0.1, 0]} castShadow material={tileMaterial}>
+                <boxGeometry args={[1.25, 0.2, 0.06]} />
+              </mesh>
+            </group>
+          );
+        })}
+
+        {/* Handrail on open side (X = +0.66) */}
+        <mesh position={[0.66, 1.85, 9.85]} rotation={[0.62, 0, 0]}>
+          <cylinderGeometry args={[0.025, 0.025, 4.3, 12]} />
+          <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
+        </mesh>
+        {/* Vertical handrail posts */}
+        {[11.6, 10.3, 9.1, 7.9].map((pz, pi) => {
+          const py = 0.5 + pi * 0.75;
+          return (
+            <mesh key={`post_${pi}`} position={[0.66, py, pz]}>
+              <cylinderGeometry args={[0.02, 0.02, 1.0, 8]} />
+              <meshStandardMaterial color="#0f172a" metalness={0.8} />
+            </mesh>
+          );
+        })}
+      </group>
 
       {/* Full ceiling/roof when cutaway is off */}
       {!isCutaway && (

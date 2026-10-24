@@ -91,7 +91,7 @@ export interface PersonAttributes {
   ageGroup: 'child' | 'adult' | 'elderly';
   mobility: 'high' | 'normal' | 'reduced';
   vulnerability: number; // 0.1 (low) to 1.0 (high e.g. elderly/child)
-  role: 'owner' | 'resident' | 'guest';
+  role: 'owner' | 'resident' | 'guest' | 'pet';
 }
 
 export interface PersonEntity {

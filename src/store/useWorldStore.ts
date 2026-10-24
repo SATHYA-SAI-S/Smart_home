@@ -27,6 +27,8 @@ interface WorldStoreState {
   roofCutaway: boolean;
   fov: number; // 60-90
   fps: number;
+  thirdPersonYaw: number;
+  thirdPersonPitch: number;
   
   // Actions
   setCameraMode: (mode: CameraViewMode) => void;
@@ -36,6 +38,8 @@ interface WorldStoreState {
   setRoofCutaway: (cutaway: boolean) => void;
   setFov: (fov: number) => void;
   setFps: (fps: number) => void;
+  setThirdPersonYaw: (yaw: number) => void;
+  setThirdPersonPitch: (pitch: number) => void;
   
   // Device management
   updateDeviceState: (deviceId: string, newState: Partial<Record<string, any>>) => void;
@@ -75,6 +79,8 @@ export const useWorldStore = create<WorldStoreState>((set, get) => ({
   roofCutaway: true,
   fov: 75,
   fps: 60,
+  thirdPersonYaw: 0,
+  thirdPersonPitch: 0.35,
 
   setCameraMode: (mode) => set({ cameraMode: mode }),
   setSelectedPersonId: (id) => set({ selectedPersonId: id }),
@@ -83,6 +89,8 @@ export const useWorldStore = create<WorldStoreState>((set, get) => ({
   setRoofCutaway: (cutaway) => set({ roofCutaway: cutaway }),
   setFov: (fov) => set({ fov }),
   setFps: (fps) => set({ fps }),
+  setThirdPersonYaw: (yaw) => set({ thirdPersonYaw: yaw }),
+  setThirdPersonPitch: (pitch) => set({ thirdPersonPitch: pitch }),
 
   updateDeviceState: (deviceId, newState) => {
     set((state) => ({

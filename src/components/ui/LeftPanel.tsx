@@ -9,7 +9,8 @@ import {
   ChevronRight, 
   Plus, 
   Trash2,
-  Activity
+  Activity,
+  Footprints
 } from 'lucide-react';
 import { useWorldStore } from '../../store/useWorldStore';
 import { PersonEntity } from '../../types/world';
@@ -31,7 +32,6 @@ export const LeftPanel: React.FC = () => {
       const grandpa = people.find((p) => p.name === 'Grandpa');
       if (grandpa) {
         grandpa.scriptedRoutine = 'stay_in_bathroom';
-        // Move Grandpa directly to Bathroom to simulate immediate entry
         updatePersonPosition(grandpa.id, [-8.0, 0, -4.0], 0);
         updatePersonActivity(grandpa.id, 'bathing');
       }
@@ -83,25 +83,28 @@ export const LeftPanel: React.FC = () => {
 
   return (
     <div
-      className={`absolute left-4 top-20 bottom-24 z-20 transition-all duration-300 flex pointer-events-auto ${
-        collapsed ? '-translate-x-[calc(100%-24px)]' : 'translate-x-0'
+      className={`absolute left-4 top-16 bottom-24 z-20 transition-all duration-300 flex pointer-events-auto ${
+        collapsed ? '-translate-x-[calc(100%-14px)]' : 'translate-x-0'
       }`}
     >
-      <div className="glass-panel w-72 rounded-2xl p-4 flex flex-col justify-between shadow-2xl overflow-y-auto">
-        {/* PANEL HEADER */}
+      <div className="glass-panel w-72 rounded-2xl p-4 flex flex-col justify-between shadow-2xl overflow-y-auto border border-white/10">
         <div>
+          {/* PANEL HEADER */}
           <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
             <div className="flex items-center space-x-2 text-white">
-              <Users size={16} className="text-sky-400" />
-              <span className="text-sm font-bold tracking-tight">Household Inhabitants</span>
+              <Users size={15} className="text-sky-400" />
+              <span className="text-xs font-bold tracking-tight uppercase">Inhabitants</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300 font-mono">
+                {people.length}
+              </span>
             </div>
             <button
               onClick={handleAddNewGuest}
-              className="p-1 rounded-lg bg-sky-500/20 text-sky-400 hover:bg-sky-500/30 transition text-xs flex items-center space-x-1 px-2 font-medium"
+              className="p-1 rounded-xl bg-sky-500/15 text-sky-400 hover:bg-sky-500/25 border border-sky-500/20 transition text-[11px] flex items-center space-x-1 px-2.5 font-medium"
               title="Add Guest Inhabitant"
             >
-              <Plus size={13} />
-              <span>Add</span>
+              <Plus size={12} />
+              <span>Guest</span>
             </button>
           </div>
 
@@ -116,42 +119,42 @@ export const LeftPanel: React.FC = () => {
                 <div
                   key={person.id}
                   onClick={() => setSelectedPersonId(person.id)}
-                  className={`p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between ${
+                  className={`p-2.5 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${
                     isSelected
-                      ? 'bg-sky-500/20 border-sky-500/60 shadow-md shadow-sky-500/10'
-                      : 'bg-slate-900/40 border-white/5 hover:border-white/20'
+                      ? 'bg-gradient-to-r from-sky-500/20 to-indigo-500/10 border-sky-500/50 shadow-lg shadow-sky-500/10'
+                      : 'bg-slate-900/50 border-white/5 hover:border-white/15 hover:bg-slate-900/70'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5">
                     {/* Person Avatar Colored Glyph */}
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shadow"
+                      className="w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-md"
                       style={{ backgroundColor: person.color }}
                     >
                       {person.name.substring(0, 1)}
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-white flex items-center space-x-1">
+                      <div className="text-xs font-semibold text-white flex items-center space-x-1.5">
                         <span>{person.name}</span>
                         {isSelected && (
-                          <span className="text-[10px] text-sky-400 font-normal">
-                            (Active)
+                          <span className="text-[9px] px-1 rounded bg-sky-500/30 text-sky-300 font-medium">
+                            Active
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center space-x-1.5 text-[10px] text-slate-400">
-                        <MapPin size={10} className="text-slate-500" />
-                        <span>{roomName}</span>
+                      <div className="flex items-center space-x-1 text-[10px] text-slate-400">
+                        <MapPin size={9} className="text-slate-500" />
+                        <span className="truncate max-w-[90px]">{roomName}</span>
                         <span>•</span>
                         <span className="text-slate-300 font-mono">[{person.activity}]</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-1">
-                    {/* Vulnerability Badge */}
+                  <div className="flex items-center space-x-1.5">
+                    {/* Mobility / Age Badge */}
                     <span
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
                         person.attributes.vulnerability > 0.6
                           ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                           : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -179,58 +182,60 @@ export const LeftPanel: React.FC = () => {
           </div>
 
           {/* ACTIVE CONTROLLER NOTICE */}
-          <div className="p-2 rounded-xl bg-slate-900/60 border border-white/5 text-[11px] text-slate-400 mb-4 flex items-center space-x-2">
+          <div className="p-2.5 rounded-xl bg-slate-900/70 border border-white/5 text-[11px] text-slate-300 mb-4 flex items-center space-x-2">
             <UserCheck size={14} className="text-sky-400 shrink-0" />
-            <span>
-              Controlling: <strong className="text-sky-300">{people.find((p) => p.id === selectedPersonId)?.name}</strong>. Use <kbd className="px-1 py-0.5 bg-slate-800 rounded font-mono text-slate-200">WASD</kbd> to move, <kbd className="px-1 py-0.5 bg-slate-800 rounded font-mono text-slate-200">E</kbd> to interact with doors.
-            </span>
+            <div className="text-[10px] leading-tight text-slate-400">
+              Controlling: <strong className="text-sky-300">{people.find((p) => p.id === selectedPersonId)?.name}</strong>
+              <div className="mt-0.5 text-slate-500">Press <span className="text-slate-300">WASD / Arrows</span> to walk</div>
+            </div>
           </div>
 
           {/* SCRIPTED NPC SCENARIOS */}
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center space-x-1.5">
-              <Activity size={13} className="text-indigo-400" />
-              <span>Scripted NPC Scenarios</span>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center space-x-1.5">
+              <Activity size={12} className="text-indigo-400" />
+              <span>Simulated Presets</span>
             </div>
             <div className="space-y-1.5">
               <button
                 onClick={() => triggerScript('grandpa_bathroom')}
-                className="w-full text-left p-2 rounded-xl bg-slate-900/40 hover:bg-white/10 border border-white/5 text-xs text-slate-300 hover:text-white transition flex items-center justify-between"
+                className="w-full text-left p-2 rounded-xl bg-slate-900/50 hover:bg-white/10 border border-white/5 text-[11px] text-slate-300 hover:text-white transition flex items-center justify-between"
               >
                 <span>Grandpa stays in Bathroom</span>
-                <Play size={12} className="text-sky-400" />
+                <Play size={11} className="text-sky-400" />
               </button>
               <button
                 onClick={() => triggerScript('grandpa_bedroom')}
-                className="w-full text-left p-2 rounded-xl bg-slate-900/40 hover:bg-white/10 border border-white/5 text-xs text-slate-300 hover:text-white transition flex items-center justify-between"
+                className="w-full text-left p-2 rounded-xl bg-slate-900/50 hover:bg-white/10 border border-white/5 text-[11px] text-slate-300 hover:text-white transition flex items-center justify-between"
               >
                 <span>Grandpa rests in Bedroom</span>
-                <Play size={12} className="text-sky-400" />
+                <Play size={11} className="text-sky-400" />
               </button>
               <button
                 onClick={() => triggerScript('reset_all')}
-                className="w-full text-left p-2 rounded-xl bg-slate-900/40 hover:bg-white/10 border border-white/5 text-xs text-slate-300 hover:text-white transition flex items-center justify-between"
+                className="w-full text-left p-2 rounded-xl bg-slate-900/50 hover:bg-white/10 border border-white/5 text-[11px] text-slate-300 hover:text-white transition flex items-center justify-between"
               >
-                <span>Reset Household Positions</span>
-                <RotateCcw size={12} className="text-slate-400" />
+                <span>Reset All Positions</span>
+                <RotateCcw size={11} className="text-slate-400" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* FOOTER STATS */}
-        <div className="pt-3 border-t border-white/10 text-[10px] text-slate-500 flex justify-between">
-          <span>Occupancy Engine: Active</span>
-          <span>Collision: Enabled</span>
+        {/* FOOTER STATUS */}
+        <div className="pt-2.5 border-t border-white/10 text-[9px] text-slate-500 flex justify-between">
+          <span>Safety Engine: 60 FPS</span>
+          <span>Collision: Solid</span>
         </div>
       </div>
 
       {/* COLLAPSE / EXPAND TOGGLE TAB */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="w-6 h-12 my-auto -mr-3 bg-slate-900/90 text-slate-400 hover:text-white rounded-r-xl border-y border-r border-white/20 flex items-center justify-center transition shadow-lg"
+        className="w-5 h-12 my-auto -mr-2.5 bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-white rounded-r-xl border-y border-r border-white/15 flex items-center justify-center transition shadow-xl"
+        title={collapsed ? 'Expand Inhabitants Panel' : 'Collapse Panel'}
       >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
     </div>
   );

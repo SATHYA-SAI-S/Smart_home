@@ -10,6 +10,7 @@ import { LawnAndGarden } from './Rooms/LawnAndGarden';
 import { VisualDevices } from './Devices/VisualDevices';
 import { Avatar } from './People/Avatar';
 import { PeopleController } from './People/PeopleController';
+import { CityEnvironment } from './City/CityEnvironment';
 
 // Dynamic Day / Night Lighting based on timeOfDay (0 - 24)
 const DynamicLighting: React.FC = () => {
@@ -68,13 +69,14 @@ const DynamicLighting: React.FC = () => {
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-camera-near={0.5}
-        shadow-camera-far={80}
+        shadow-camera-near={10}
+        shadow-camera-far={90}
         shadow-camera-left={-22}
         shadow-camera-right={22}
         shadow-camera-top={22}
         shadow-camera-bottom={-22}
-        shadow-bias={-0.0003}
+        shadow-bias={-0.00005}
+        shadow-normalBias={0.035}
       />
       {/* Sky backdrop sphere */}
       <mesh scale={100}>
@@ -95,18 +97,22 @@ export const HouseCanvas: React.FC = () => {
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden bg-slate-950">
       <Canvas
-        shadows
-        camera={{ position: [18, 16, 24], fov: 65, near: 0.1, far: 250 }}
+        shadows={{ type: THREE.PCFSoftShadowMap }}
+        camera={{ position: [18, 16, 24], fov: 65, near: 0.2, far: 250 }}
         gl={{
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.05,
           powerPreference: 'high-performance',
+          logarithmicDepthBuffer: true,
         }}
       >
         <Suspense fallback={null}>
           <DynamicLighting />
           <CameraController />
+
+          {/* Surrounding Realistic City & Roadway */}
+          <CityEnvironment />
 
           {/* Architectural House Structure */}
           <FloorAndWalls />

@@ -8,8 +8,7 @@ import {
   Flame, 
   Zap, 
   ThermometerSnowflake, 
-  Video, 
-  Power 
+  Video 
 } from 'lucide-react';
 import { useWorldStore } from '../../store/useWorldStore';
 
@@ -42,39 +41,39 @@ export const BottomDeviceStrip: React.FC = () => {
   const getDeviceIcon = (dev: any) => {
     switch (dev.type) {
       case 'light':
-        return <Lightbulb size={13} className={dev.state.power === 'on' ? 'text-amber-300' : 'text-slate-400'} />;
+        return <Lightbulb size={12} className={dev.state.power === 'on' ? 'text-amber-300' : 'text-slate-500'} />;
       case 'fan':
-        return <Wind size={13} className={dev.state.power === 'on' ? 'text-sky-300 animate-spin' : 'text-slate-400'} />;
+        return <Wind size={12} className={dev.state.power === 'on' ? 'text-sky-300 animate-spin' : 'text-slate-500'} />;
       case 'ac':
-        return <ThermometerSnowflake size={13} className={dev.state.power === 'on' ? 'text-cyan-300' : 'text-slate-400'} />;
+        return <ThermometerSnowflake size={12} className={dev.state.power === 'on' ? 'text-cyan-300' : 'text-slate-500'} />;
       case 'tv':
-        return <Tv size={13} className={dev.state.power === 'on' ? 'text-indigo-300' : 'text-slate-400'} />;
+        return <Tv size={12} className={dev.state.power === 'on' ? 'text-indigo-300' : 'text-slate-500'} />;
       case 'stove':
-        return <Flame size={13} className={dev.state.power === 'on' ? 'text-rose-400' : 'text-slate-400'} />;
+        return <Flame size={12} className={dev.state.power === 'on' ? 'text-rose-400' : 'text-slate-500'} />;
       case 'door_lock':
         return dev.state.locked ? (
-          <Lock size={13} className="text-rose-400" />
+          <Lock size={12} className="text-rose-400" />
         ) : (
-          <Unlock size={13} className="text-emerald-400" />
+          <Unlock size={12} className="text-emerald-400" />
         );
       case 'camera':
-        return <Video size={13} className={dev.state.power === 'on' ? 'text-emerald-400' : 'text-slate-400'} />;
+        return <Video size={12} className={dev.state.power === 'on' ? 'text-emerald-400' : 'text-slate-500'} />;
       default:
-        return <Zap size={13} className={dev.state.power === 'on' ? 'text-amber-400' : 'text-slate-400'} />;
+        return <Zap size={12} className={dev.state.power === 'on' ? 'text-amber-400' : 'text-slate-500'} />;
     }
   };
 
   return (
     <div className="absolute bottom-3 left-4 right-4 z-20 pointer-events-none flex justify-center">
-      <div className="glass-panel px-4 py-2 rounded-2xl flex items-center space-x-3 pointer-events-auto shadow-2xl max-w-5xl overflow-x-auto no-scrollbar">
-        {/* ROOM FILTER PILL */}
-        <div className="flex items-center space-x-1 shrink-0 pr-3 border-r border-white/10 text-xs">
+      <div className="glass-panel px-3.5 py-1.5 rounded-2xl flex items-center space-x-2.5 pointer-events-auto shadow-2xl max-w-5xl overflow-x-auto no-scrollbar border border-white/10">
+        {/* ROOM FILTER SELECT */}
+        <div className="flex items-center space-x-1 shrink-0 pr-2 border-r border-white/10 text-xs">
           <select
             value={selectedRoomFilter}
             onChange={(e) => setSelectedRoomFilter(e.target.value)}
-            className="bg-slate-900/90 text-[11px] font-semibold text-slate-300 rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-sky-500 cursor-pointer"
+            className="bg-slate-900/90 text-[10px] font-semibold text-slate-300 rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-sky-500 cursor-pointer"
           >
-            <option value="all">All Rooms ({devices.length})</option>
+            <option value="all">All Devices ({devices.length})</option>
             {rooms.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -84,7 +83,7 @@ export const BottomDeviceStrip: React.FC = () => {
         </div>
 
         {/* DEVICE STATUS CHIPS */}
-        <div className="flex items-center space-x-2 shrink-0">
+        <div className="flex items-center space-x-1.5 shrink-0">
           {filteredDevices.map((dev) => {
             const isActive = dev.type === 'door_lock' ? dev.state.locked : dev.state.power === 'on';
 
@@ -92,17 +91,17 @@ export const BottomDeviceStrip: React.FC = () => {
               <button
                 key={dev.id}
                 onClick={() => handleToggle(dev)}
-                className={`px-2.5 py-1.5 rounded-xl border transition flex items-center space-x-2 text-xs font-medium cursor-pointer ${
+                className={`px-2 py-1 rounded-xl border transition-all duration-150 flex items-center space-x-1.5 text-xs font-medium cursor-pointer ${
                   isActive
                     ? 'bg-slate-800/90 border-sky-500/40 text-white shadow-sm'
-                    : 'bg-slate-900/50 border-white/5 text-slate-400 hover:text-slate-200'
+                    : 'bg-slate-900/40 border-white/5 text-slate-400 hover:text-slate-200 hover:bg-slate-900/70'
                 }`}
                 title={`Click to manually toggle ${dev.name}`}
               >
                 {getDeviceIcon(dev)}
-                <span className="truncate max-w-[110px] text-[11px]">{dev.name.split(' ')[0]}</span>
+                <span className="truncate max-w-[100px] text-[10px]">{dev.name.split(' ')[0]}</span>
                 {dev.criticality === 'ESSENTIAL' && (
-                  <span className="text-[8px] uppercase font-bold text-rose-400 bg-rose-500/20 px-1 rounded">
+                  <span className="text-[7px] uppercase font-bold text-rose-300 bg-rose-500/20 px-1 rounded">
                     ESS
                   </span>
                 )}

@@ -64,13 +64,13 @@ export const INITIAL_ROOMS: RoomZone[] = [
   },
   {
     id: 'terrace',
-    name: 'Terrace',
+    name: 'Terrace (1st Floor)',
     bounds: {
-      min: [6.2, 0, 0.2],
-      max: [13.8, 3.5, 7.8],
+      min: [6.2, 3.0, 0.2],
+      max: [13.8, 6.0, 7.8],
     },
-    cameraPosition: [13.2, 3.2, 7.2],
-    cameraTarget: [10.0, 1.0, 4.0],
+    cameraPosition: [13.2, 6.2, 7.2],
+    cameraTarget: [10.0, 4.0, 4.0],
     color: '#f97316',
     floorTextureType: 'deck',
   },
@@ -78,7 +78,7 @@ export const INITIAL_ROOMS: RoomZone[] = [
     id: 'lawn',
     name: 'Lawn & Garden',
     bounds: {
-      min: [-13.8, 0, 8.2],
+      min: [-4.0, 0, 8.2],
       max: [15.8, 3.5, 19.8],
     },
     cameraPosition: [14.0, 4.5, 19.0],
@@ -541,6 +541,50 @@ export const INITIAL_PEOPLE: PersonEntity[] = [
     ],
     targetWaypointIndex: 0,
     idleTimer: 4,
+  },
+  {
+    id: 'person_sudharshini',
+    name: 'Sudharshini',
+    color: '#ec4899', // Clown Hot Pink
+    attributes: {
+      ageGroup: 'adult',
+      mobility: 'normal',
+      vulnerability: 0.1,
+      role: 'guest',
+    },
+    position: [2.5, 0, 9.4],
+    rotationY: Math.PI,
+    currentRoom: 'lawn',
+    activity: 'idle',
+    isControlled: false,
+    pathWaypoints: [],
+    idleTimer: 999999,
+  },
+  {
+    id: 'person_dog',
+    name: 'Buddy',
+    color: '#d97706', // Warm Golden / Honey
+    attributes: {
+      ageGroup: 'child',
+      mobility: 'high',
+      vulnerability: 0.2,
+      role: 'pet',
+    },
+    position: [4.0, 0, 13.0],
+    rotationY: 0,
+    currentRoom: 'lawn',
+    activity: 'walking',
+    isControlled: false,
+    pathWaypoints: [
+      [4.0, 0, 13.0],
+      [-2.0, 0, 15.0],
+      [5.0, 0, 10.5],
+      [-3.0, 0, 11.0],
+      [3.0, 0, 16.5],
+      [4.0, 0, 13.0],
+    ],
+    targetWaypointIndex: 0,
+    idleTimer: 2,
   },
 ];
 
