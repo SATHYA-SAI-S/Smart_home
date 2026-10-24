@@ -93,6 +93,14 @@ export interface DeclarativeRule {
     | 'perimeter_exposure' 
     | 'vulnerable_occupant' 
     | 'energy_waste' 
+    | 'safety_sensor_protection'
+    | 'heating_unattended'
+    | 'gas_safety'
+    | 'emergency_egress'
+    | 'pet_protection'
+    | 'sleep_egress_lighting'
+    | 'perimeter_open'
+    | 'camera_privacy'
     | 'custom';
   parameters?: Record<string, any>;
   explanation: string;

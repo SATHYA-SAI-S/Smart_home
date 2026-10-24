@@ -303,6 +303,69 @@ const defaultSchemas: DeviceSchema[] = [
       },
     },
   },
+  {
+    type: 'safety_sensor',
+    criticality: 'ESSENTIAL',
+    actions: {
+      turn_off: {
+        name: 'Mute/Disable Safety Sensor',
+        description: 'Mutes or disables detector sensors (smoke, CO, gas, leak)',
+        preconditions: { power: 'on' },
+        effects: { power: 'off' },
+        hazards: ['undetected_life_safety_hazard'],
+        reversibility: 'HIGH',
+      },
+      turn_on: {
+        name: 'Enable Safety Sensor',
+        description: 'Activates detector monitoring',
+        preconditions: { power: 'off' },
+        effects: { power: 'on' },
+        reversibility: 'IMMEDIATE',
+      },
+    },
+  },
+  {
+    type: 'gas_valve',
+    criticality: 'SAFETY',
+    actions: {
+      turn_off: {
+        name: 'Shut Off Gas Valve',
+        description: 'Isolates residential gas line supply',
+        preconditions: { power: 'on' },
+        effects: { power: 'off' },
+        reversibility: 'IMMEDIATE',
+      },
+      turn_on: {
+        name: 'Open Gas Valve / Ignite Gas',
+        description: 'Opens gas valve line or activates ignition',
+        preconditions: { power: 'off' },
+        effects: { power: 'on' },
+        hazards: ['gas_leak_hazard', 'fire_explosion_unattended'],
+        reversibility: 'IMMEDIATE',
+      },
+    },
+  },
+  {
+    type: 'siren',
+    criticality: 'ESSENTIAL',
+    actions: {
+      turn_off: {
+        name: 'Silence Emergency Siren',
+        description: 'Silences residential alert siren',
+        preconditions: { power: 'on' },
+        effects: { power: 'off' },
+        hazards: ['unheard_evacuation_alert'],
+        reversibility: 'HIGH',
+      },
+      turn_on: {
+        name: 'Sound Siren Alarm',
+        description: 'Activates emergency acoustic siren',
+        preconditions: { power: 'off' },
+        effects: { power: 'on' },
+        reversibility: 'IMMEDIATE',
+      },
+    },
+  },
 ];
 
 // Register default schemas

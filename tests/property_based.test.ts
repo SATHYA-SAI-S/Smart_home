@@ -48,8 +48,9 @@ describe('Property-Based Invariant Verification (fast-check)', () => {
 
           const { safePlan } = PolicyEngine.evaluateInvariants([candidateStep], world);
           const isEssential = targetDev.criticality === 'ESSENTIAL';
+          const isGasHazard = (targetDev.type === 'gas_valve' || targetDev.id.includes('gas')) && targetPower === 'on' && randomRoom !== 'kitchen';
 
-          if (isEssential && targetPower === 'off') {
+          if ((isEssential && targetPower === 'off') || isGasHazard) {
             // Must be blocked!
             expect(safePlan[0].isBlockedByInvariant).toBe(true);
             expect(safePlan[0].approved).toBe(false);

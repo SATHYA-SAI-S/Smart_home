@@ -127,4 +127,93 @@ describe('Hard Invariants Tests', () => {
     expect(safePlan[0].isBlockedByInvariant).toBe(true);
     expect(safePlan[0].invariantViolationMessage).toContain('currently open');
   });
+
+  it('Rule 1 Invariant: Blocks disabling or muting smoke/CO detectors and siren', () => {
+    const muteSmokeStep: PlanStep = {
+      id: 'step_mute_smoke',
+      deviceId: 'smoke_detector',
+      deviceName: 'Hallway Smoke & Fire Detector',
+      deviceType: 'safety_sensor',
+      room: 'hall',
+      action: 'turn_off',
+      targetState: { power: 'off' },
+      currentState: { power: 'on' },
+      reason: 'User command to silence sensor',
+      isEssential: true,
+      approved: true,
+    };
+
+    const { safePlan, violations } = PolicyEngine.evaluateInvariants([muteSmokeStep], worldState);
+    expect(violations.length).toBe(1);
+    expect(safePlan[0].isBlockedByInvariant).toBe(true);
+    expect(safePlan[0].invariantViolationMessage).toContain('Never disable or mute safety detectors');
+  });
+
+  it('Rule 3 Invariant: Blocks gas valve activation / ignition with no occupant present in kitchen', () => {
+    // Occupants are in hall and lawn
+    const openGasStep: PlanStep = {
+      id: 'step_open_gas',
+      deviceId: 'gas_safety_valve',
+      deviceName: 'Kitchen Automated Gas Safety Valve',
+      deviceType: 'gas_valve',
+      room: 'kitchen',
+      action: 'turn_on',
+      targetState: { power: 'on' },
+      currentState: { power: 'off' },
+      reason: 'Open gas line',
+      isEssential: false,
+      approved: true,
+    };
+
+    const { safePlan, violations } = PolicyEngine.evaluateInvariants([openGasStep], worldState);
+    expect(violations.length).toBe(1);
+    expect(safePlan[0].isBlockedByInvariant).toBe(true);
+    expect(safePlan[0].invariantViolationMessage).toContain('no occupant present in kitchen');
+  });
+
+  it('Rule 4 Invariant: Blocks locking doors or closing gates during active fire/CO alarm', () => {
+    const alarmWorld = JSON.parse(JSON.stringify(worldState));
+    const smoke = alarmWorld.devices.find((d: any) => d.id === 'smoke_detector');
+    smoke.state.alarmActive = true;
+
+    const lockDoorStep: PlanStep = {
+      id: 'step_lock_egress',
+      deviceId: 'bedroom_door_lock',
+      deviceName: 'Bedroom Door Lock',
+      deviceType: 'door_lock',
+      room: 'bedroom',
+      action: 'lock',
+      targetState: { locked: true },
+      currentState: { locked: false },
+      reason: 'Lock during fire',
+      isEssential: false,
+      approved: true,
+    };
+
+    const { safePlan, violations } = PolicyEngine.evaluateInvariants([lockDoorStep], alarmWorld);
+    expect(violations.length).toBe(1);
+    expect(safePlan[0].isBlockedByInvariant).toBe(true);
+    expect(safePlan[0].invariantViolationMessage).toContain('Emergency egress active');
+  });
+
+  it('Rule 8 Invariant: Blocks activating cameras in private zones (bedroom/bathroom)', () => {
+    const cameraInBedroomStep: PlanStep = {
+      id: 'step_cam_bed',
+      deviceId: 'bedroom_camera',
+      deviceName: 'Bedroom Nanny Cam',
+      deviceType: 'camera',
+      room: 'bedroom',
+      action: 'turn_on',
+      targetState: { power: 'on', recording: true },
+      currentState: { power: 'off' },
+      reason: 'Activate bedroom feed',
+      isEssential: false,
+      approved: true,
+    };
+
+    const { safePlan, violations } = PolicyEngine.evaluateInvariants([cameraInBedroomStep], worldState);
+    expect(violations.length).toBe(1);
+    expect(safePlan[0].isBlockedByInvariant).toBe(true);
+    expect(safePlan[0].invariantViolationMessage).toContain('strictly prohibited in private room "bedroom"');
+  });
 });

@@ -131,33 +131,41 @@ export const FloorAndWalls: React.FC = () => {
         <boxGeometry args={[0.2, wallHeight, 8.0]} />
       </mesh>
 
-      {/* Dividing Wall: Bedroom vs Bathroom (X = -4.0, Z = [-8, 0]) */}
-      <mesh position={[-4.0, wallHeight / 2, -4.0]} castShadow receiveShadow material={wallMaterial}>
-        <boxGeometry args={[0.2, wallHeight, 7.8]} />
+      {/* Dividing Wall: Bedroom vs Bathroom (X = -4.0, Z = [-8.0, 0.0]) with doorway to Master Bathroom */}
+      {/* North segment */}
+      <mesh position={[-4.0, wallHeight / 2, -5.2]} castShadow receiveShadow material={wallMaterial}>
+        <boxGeometry args={[0.2, wallHeight, 5.4]} />
       </mesh>
+      {/* South segment */}
+      <mesh position={[-4.0, wallHeight / 2, -0.8]} castShadow receiveShadow material={wallMaterial}>
+        <boxGeometry args={[0.2, wallHeight, 1.4]} />
+      </mesh>
+      {/* Lintel above bathroom door if full height */}
+      {!isCutaway && (
+        <mesh position={[-4.0, 2.5, -2.0]} castShadow receiveShadow material={wallMaterial}>
+          <boxGeometry args={[0.2, 0.6, 1.2]} />
+        </mesh>
+      )}
 
-      {/* Dividing Wall: Main Hall vs Bedroom (Z = 0.0, X = [-4, 6]) with doorway */}
-      {/* Left segment */}
-      <mesh position={[-1.75, wallHeight / 2, 0.0]} castShadow receiveShadow material={wallMaterial}>
-        <boxGeometry args={[4.5, wallHeight, 0.2]} />
+      {/* Dividing Wall: Main Hall vs Bedroom (Z = 0.0, X = [-4, 6]) with doorway moved aside away from TV */}
+      {/* Left segment behind TV console */}
+      <mesh position={[-0.7, wallHeight / 2, 0.0]} castShadow receiveShadow material={wallMaterial}>
+        <boxGeometry args={[6.6, wallHeight, 0.2]} />
       </mesh>
       {/* Right segment */}
-      <mesh position={[3.75, wallHeight / 2, 0.0]} castShadow receiveShadow material={wallMaterial}>
-        <boxGeometry args={[4.5, wallHeight, 0.2]} />
+      <mesh position={[4.85, wallHeight / 2, 0.0]} castShadow receiveShadow material={wallMaterial}>
+        <boxGeometry args={[2.1, wallHeight, 0.2]} />
       </mesh>
       {/* Lintel above bedroom door if full height */}
       {!isCutaway && (
-        <mesh position={[1.0, 2.5, 0.0]} castShadow receiveShadow material={wallMaterial}>
+        <mesh position={[3.2, 2.5, 0.0]} castShadow receiveShadow material={wallMaterial}>
           <boxGeometry args={[1.2, 0.6, 0.2]} />
         </mesh>
       )}
 
-      {/* Dividing Wall: Kitchen vs Bathroom (Z = 0.0, X = [-12, -4]) with doorway */}
-      <mesh position={[-10.25, wallHeight / 2, 0.0]} castShadow receiveShadow material={wallMaterial}>
-        <boxGeometry args={[3.5, wallHeight, 0.2]} />
-      </mesh>
-      <mesh position={[-5.75, wallHeight / 2, 0.0]} castShadow receiveShadow material={wallMaterial}>
-        <boxGeometry args={[3.5, wallHeight, 0.2]} />
+      {/* Dividing Wall: Kitchen vs Bathroom (Z = 0.0, X = [-12, -4]) - Solid dividing wall */}
+      <mesh position={[-8.0, wallHeight / 2, 0.0]} castShadow receiveShadow material={wallMaterial}>
+        <boxGeometry args={[7.8, wallHeight, 0.2]} />
       </mesh>
 
       {/* Dividing Wall: Main Hall vs Kitchen (X = -4.0, Z = [0, 8]) with doorway */}

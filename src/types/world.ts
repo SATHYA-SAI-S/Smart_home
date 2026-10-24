@@ -30,7 +30,10 @@ export type DeviceType =
   | 'garage_door'
   | 'gate'
   | 'smart_plug'
-  | 'main_switch';
+  | 'main_switch'
+  | 'safety_sensor'
+  | 'gas_valve'
+  | 'siren';
 
 export interface DeviceState {
   power?: 'on' | 'off';

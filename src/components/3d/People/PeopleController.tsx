@@ -20,15 +20,15 @@ const STATIC_OBSTACLES: ObstacleBox[] = [
   { minX: -12.2, maxX: -11.8, minZ: -8.0, maxZ: 16.0 }, // West outer
   { minX: 5.8, maxX: 6.2, minZ: -8.0, maxZ: 0.0 }, // East bedroom outer
   // Interior dividing walls
-  { minX: -4.1, maxX: -3.9, minZ: -8.0, maxZ: -0.2 }, // Bed vs Bath
+  { minX: -4.1, maxX: -3.9, minZ: -8.0, maxZ: -2.6 }, // Bed vs Bath (North segment)
+  { minX: -4.1, maxX: -3.9, minZ: -1.4, maxZ: 0.0 }, // Bed vs Bath (South segment, doorway at Z=-2.0)
   { minX: -4.1, maxX: -3.9, minZ: 0.0, maxZ: 3.4 }, // Hall vs Kitchen (North)
   { minX: -4.1, maxX: -3.9, minZ: 4.6, maxZ: 8.0 }, // Hall vs Kitchen (South)
-  { minX: -12.0, maxX: -8.6, minZ: -0.1, maxZ: 0.1 }, // Bath vs Kitchen (Left)
-  { minX: -7.4, maxX: -4.0, minZ: -0.1, maxZ: 0.1 }, // Bath vs Kitchen (Right)
+  { minX: -12.0, maxX: -4.0, minZ: -0.15, maxZ: 0.15 }, // Bath vs Kitchen (Solid Wall)
   { minX: -12.0, maxX: -8.6, minZ: 7.9, maxZ: 8.1 }, // Kitchen vs Garage (Left)
   { minX: -7.4, maxX: -4.0, minZ: 7.9, maxZ: 8.1 }, // Kitchen vs Garage (Right)
-  { minX: -4.0, maxX: 0.4, minZ: -0.1, maxZ: 0.1 }, // Hall vs Bedroom (Left)
-  { minX: 1.6, maxX: 6.0, minZ: -0.1, maxZ: 0.1 }, // Hall vs Bedroom (Right)
+  { minX: -4.0, maxX: 2.6, minZ: -0.15, maxZ: 0.15 }, // Hall vs Bedroom (Left, behind TV console)
+  { minX: 3.8, maxX: 6.0, minZ: -0.15, maxZ: 0.15 }, // Hall vs Bedroom (Right, doorway at X=3.2)
   { minX: -4.0, maxX: 0.4, minZ: 7.9, maxZ: 8.1 }, // Hall South exterior (Left)
   { minX: 1.6, maxX: 6.0, minZ: 7.9, maxZ: 8.1 }, // Hall South exterior (Right)
   { minX: 5.8, maxX: 6.2, minZ: 0.0, maxZ: 3.0 }, // Hall to Terrace (North)
@@ -37,12 +37,12 @@ const STATIC_OBSTACLES: ObstacleBox[] = [
   { minX: -0.5, maxX: 2.5, minZ: -5.5, maxZ: -2.7 }, // King Bed
   { minX: 4.2, maxX: 5.8, minZ: -4.5, maxZ: -1.5 }, // Bedroom Dresser
   { minX: -0.5, maxX: 2.8, minZ: 4.5, maxZ: 6.2 }, // Hall couch
-  { minX: -0.5, maxX: 2.5, minZ: 0.2, maxZ: 0.8 }, // Hall TV console
+  { minX: -0.5, maxX: 2.3, minZ: 0.2, maxZ: 0.8 }, // Hall TV console
   { minX: -11.8, maxX: -9.8, minZ: 0.8, maxZ: 7.2 }, // Kitchen counter & Refrigerator
   { minX: -8.2, maxX: -6.0, minZ: 2.8, maxZ: 5.2 }, // Kitchen island
-  { minX: -11.8, maxX: -10.0, minZ: -2.5, maxZ: -0.5 }, // Bathroom Vanity & Sink
-  { minX: -11.8, maxX: -10.0, minZ: -4.5, maxZ: -2.8 }, // Bathroom Toilet
-  { minX: -6.5, maxX: -4.2, minZ: -4.5, maxZ: -2.0 }, // Bathroom Shower
+  { minX: -11.2, maxX: -10.2, minZ: -6.2, maxZ: -4.8 }, // Bathroom Vanity & Sink
+  { minX: -11.2, maxX: -10.2, minZ: -3.4, maxZ: -2.2 }, // Bathroom Toilet
+  { minX: -6.4, maxX: -4.6, minZ: -7.4, maxZ: -5.6 }, // Bathroom Shower
   { minX: -9.5, maxX: -6.0, minZ: 9.8, maxZ: 14.5 }, // Garage Car
   { minX: -11.8, maxX: -10.8, minZ: 10.0, maxZ: 14.0 }, // Garage Workbench
   { minX: 2.0, maxX: 3.0, minZ: 8.9, maxZ: 9.9 }, // Clown Sudharshini
@@ -63,6 +63,7 @@ export const PeopleController: React.FC = () => {
   const updatePersonActivity = useWorldStore((state) => state.updatePersonActivity);
   const doors = useWorldStore((state) => state.doors);
   const toggleDoor = useWorldStore((state) => state.toggleDoor);
+  const setDoorOpen = useWorldStore((state) => state.setDoorOpen);
 
   const keysPressed = useRef<{ [key: string]: boolean }>({});
   const controlledYaw = useRef<number>(0);
@@ -133,7 +134,7 @@ export const PeopleController: React.FC = () => {
   }, [people, selectedPersonId, doors, toggleDoor]);
 
   // Collision detection checking obstacles and closed doors with sliding
-  const checkCollision = (x: number, z: number, y = 0, radius = 0.32): boolean => {
+  const checkCollision = (x: number, z: number, y = 0, radius = 0.25): boolean => {
     // 1. Check static obstacles
     for (const obs of STATIC_OBSTACLES) {
       if (obs.minY !== undefined && y < obs.minY) continue;
@@ -231,6 +232,16 @@ export const PeopleController: React.FC = () => {
         floorHeight = 3.0;
       }
 
+      // Auto-open unlocked doors when the avatar approaches
+      doors.forEach((door) => {
+        if (!door.isOpen && !door.isLocked) {
+          const dist = Math.hypot(door.position[0] - px, door.position[2] - pz);
+          if (dist < 1.6) {
+            setDoorOpen(door.id, true);
+          }
+        }
+      });
+
       // Gravity & Jumping physics
       velocityY.current -= 15.0 * delta;
       let nextY = py + velocityY.current * delta;
@@ -258,18 +269,18 @@ export const PeopleController: React.FC = () => {
         const proposedX = px + moveVec.x * speed * delta;
         const proposedZ = pz + moveVec.z * speed * delta;
 
-        // Sliding collision response
-        const blockedFull = checkCollision(proposedX, proposedZ, nextY, 0.32);
+        // Sliding collision response with 0.25m avatar radius
+        const blockedFull = checkCollision(proposedX, proposedZ, nextY, 0.25);
         if (!blockedFull) {
           nextX = proposedX;
           nextZ = proposedZ;
         } else {
           // Slide along X
-          if (!checkCollision(proposedX, pz, nextY, 0.32)) {
+          if (!checkCollision(proposedX, pz, nextY, 0.25)) {
             nextX = proposedX;
           }
           // Slide along Z
-          if (!checkCollision(px, proposedZ, nextY, 0.32)) {
+          if (!checkCollision(px, proposedZ, nextY, 0.25)) {
             nextZ = proposedZ;
           }
         }
@@ -295,34 +306,86 @@ export const PeopleController: React.FC = () => {
 
       // Scripted scenario: "Grandpa goes into the bathroom and stays there"
       if (npc.scriptedRoutine === 'stay_in_bathroom') {
-        const target: [number, number, number] = [-8.0, 0, -4.0];
-        const dist = Math.hypot(target[0] - npc.position[0], target[2] - npc.position[2]);
+        const [nx, ny, nz] = npc.position;
 
-        if (dist > 0.4) {
-          const dirX = (target[0] - npc.position[0]) / dist;
-          const dirZ = (target[2] - npc.position[2]) / dist;
-          const speed = 1.2;
-          const nextX = npc.position[0] + dirX * speed * delta;
-          const nextZ = npc.position[2] + dirZ * speed * delta;
+        // Auto-open unlocked doors when NPC approaches
+        doors.forEach((door) => {
+          if (!door.isOpen && !door.isLocked) {
+            const d = Math.hypot(door.position[0] - nx, door.position[2] - nz);
+            if (d < 1.6) setDoorOpen(door.id, true);
+          }
+        });
+
+        // Determine destination waypoint routing safely through doorways
+        let target: [number, number, number] = [-7.5, 0, -3.5];
+        if (nz > 0.2) {
+          // If in hall/kitchen: route to hall side of bedroom doorway first
+          if (Math.hypot(3.2 - nx, 1.5 - nz) > 0.4) {
+            target = [3.2, 0, 1.5];
+          } else {
+            target = [3.2, 0, 0.0];
+          }
+        } else if (nz >= -0.2 && nz <= 0.2 && nx >= 2.6) {
+          // In bedroom doorway threshold: step into bedroom walkway
+          target = [3.2, 0, -1.8];
+        } else if (nx > -3.8) {
+          // Inside bedroom: route to bedroom side of ensuite door
+          if (Math.hypot(-2.0 - nx, -2.0 - nz) > 0.4) {
+            target = [-2.0, 0, -2.0];
+          } else {
+            target = [-4.0, 0, -2.0];
+          }
+        } else {
+          // Inside bathroom: final resting spot
+          target = [-7.5, 0, -3.5];
+        }
+
+        const dist = Math.hypot(target[0] - nx, target[2] - nz);
+        if (dist > 0.3) {
+          const dirX = (target[0] - nx) / dist;
+          const dirZ = (target[2] - nz) / dist;
+          const speed = 1.1;
+          const proposedX = nx + dirX * speed * delta;
+          const proposedZ = nz + dirZ * speed * delta;
           const angle = Math.atan2(dirX, dirZ);
 
-          updatePersonPosition(npc.id, [nextX, 0, nextZ], angle);
+          // Check collisions with walls - NEVER pass through walls
+          if (!checkCollision(proposedX, proposedZ, ny, 0.25)) {
+            updatePersonPosition(npc.id, [proposedX, ny, proposedZ], angle);
+          } else if (!checkCollision(proposedX, nz, ny, 0.25)) {
+            updatePersonPosition(npc.id, [proposedX, ny, nz], angle);
+          } else if (!checkCollision(nx, proposedZ, ny, 0.25)) {
+            updatePersonPosition(npc.id, [nx, ny, proposedZ], angle);
+          }
           if (npc.activity !== 'walking') updatePersonActivity(npc.id, 'walking');
         } else {
-          if (npc.activity !== 'bathing') updatePersonActivity(npc.id, 'bathing');
+          // Reached intermediate or final waypoint
+          if (nx <= -4.0) {
+            if (npc.activity !== 'bathing') updatePersonActivity(npc.id, 'bathing');
+          }
         }
         return;
       }
 
       // Default autonomous waypoint patrol
       if (npc.pathWaypoints && npc.pathWaypoints.length > 0) {
+        const [nx, ny, nz] = npc.position;
+
+        // Auto-open unlocked doors when NPC approaches
+        doors.forEach((door) => {
+          if (!door.isOpen && !door.isLocked) {
+            const d = Math.hypot(door.position[0] - nx, door.position[2] - nz);
+            if (d < 1.6) setDoorOpen(door.id, true);
+          }
+        });
+
         const waypoints = npc.pathWaypoints;
         const currentIndex = npc.targetWaypointIndex || 0;
         const currentTarget = waypoints[currentIndex];
 
         const dist = Math.hypot(
-          currentTarget[0] - npc.position[0],
-          currentTarget[2] - npc.position[2]
+          currentTarget[0] - nx,
+          currentTarget[2] - nz
         );
 
         if (dist < 0.4) {
@@ -341,17 +404,31 @@ export const PeopleController: React.FC = () => {
             npc.idleTimer = timer;
           }
         } else {
-          // Walk towards waypoint
-          const dirX = (currentTarget[0] - npc.position[0]) / dist;
-          const dirZ = (currentTarget[2] - npc.position[2]) / dist;
-          const speed = npc.attributes.mobility === 'reduced' ? 1.1 : 1.8;
-          const nextX = npc.position[0] + dirX * speed * delta;
-          const nextZ = npc.position[2] + dirZ * speed * delta;
+          // Walk towards waypoint with wall collision prevention
+          const dirX = (currentTarget[0] - nx) / dist;
+          const dirZ = (currentTarget[2] - nz) / dist;
+          const speed = npc.attributes.mobility === 'reduced' ? 1.0 : 1.6;
+          const proposedX = nx + dirX * speed * delta;
+          const proposedZ = nz + dirZ * speed * delta;
           const angle = Math.atan2(dirX, dirZ);
 
-          updatePersonPosition(npc.id, [nextX, 0, nextZ], angle);
-          if (npc.activity !== 'walking') {
-            updatePersonActivity(npc.id, 'walking');
+          // Verify collision before moving - NEVER pass through walls
+          const targetY = currentTarget[1] !== undefined ? currentTarget[1] : ny;
+          if (!checkCollision(proposedX, proposedZ, targetY, 0.25)) {
+            updatePersonPosition(npc.id, [proposedX, targetY, proposedZ], angle);
+            if (npc.activity !== 'walking') {
+              updatePersonActivity(npc.id, 'walking');
+            }
+          } else {
+            // Slide along unobstructed axis
+            if (!checkCollision(proposedX, nz, targetY, 0.25)) {
+              updatePersonPosition(npc.id, [proposedX, targetY, nz], angle);
+            } else if (!checkCollision(nx, proposedZ, targetY, 0.25)) {
+              updatePersonPosition(npc.id, [nx, targetY, proposedZ], angle);
+            } else {
+              // Path blocked (e.g. door locked) -> advance to next waypoint
+              npc.targetWaypointIndex = (currentIndex + 1) % waypoints.length;
+            }
           }
         }
       }

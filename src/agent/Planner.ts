@@ -245,12 +245,23 @@ export class Planner {
           intent.scope === 'all' ||
           dev.room === intent.scope ||
           dev.type === intent.scope ||
-          dev.id === intent.scope;
+          dev.id === intent.scope ||
+          (intent.scope === 'doors' && (dev.type === 'door_lock' || dev.type === 'garage_door' || dev.type === 'gate')) ||
+          (intent.scope === 'locks' && dev.type === 'door_lock') ||
+          (intent.scope === 'exterior' && (dev.room === 'lawn' || dev.id.includes('main_door') || dev.id.includes('garage') || dev.id.includes('gate'))) ||
+          (intent.scope === 'sensors' && (dev.type === 'safety_sensor' || dev.type === 'siren')) ||
+          (intent.scope === 'appliances' && (dev.type === 'stove' || dev.type === 'water_heater' || dev.type === 'refrigerator' || dev.type === 'tv' || dev.type === 'fan'));
 
         if (!matchesScope) return;
 
         const schema = DeviceTypeRegistry.get(dev.type);
         if (!schema) return;
+
+        const isLockGoal =
+          intent.goal.includes('lock') ||
+          intent.goal === 'secure_perimeter' ||
+          intent.goal === 'lock_perimeter' ||
+          intent.goal === 'lock_all_doors';
 
         if (intent.goal.includes('turn_off') && dev.state.power === 'on') {
           rawSteps.push({
@@ -280,7 +291,10 @@ export class Planner {
             isEssential: dev.criticality === 'ESSENTIAL',
             approved: true,
           });
-        } else if (intent.goal.includes('lock') && dev.type === 'door_lock' && !dev.state.locked) {
+        } else if (isLockGoal && dev.type === 'door_lock' && !dev.state.locked) {
+          const isInterior = dev.room === 'bedroom' || dev.room === 'bathroom' || dev.room === 'kitchen';
+          const hasIndoorOccupants = people.some((p) => p.currentRoom !== 'lawn');
+
           rawSteps.push({
             id: `step_${dev.id}_lock`,
             deviceId: dev.id,
@@ -290,9 +304,12 @@ export class Planner {
             action: 'lock',
             targetState: { locked: true },
             currentState: { ...dev.state },
-            reason: `Lock requested for ${dev.name}.`,
+            reason: isInterior && hasIndoorOccupants
+              ? `Caution: Locking interior door ${dev.name} while occupants are inside residence.`
+              : `Lock requested for ${dev.name}.`,
             isEssential: false,
-            approved: true,
+            riskSeverity: isInterior && hasIndoorOccupants ? 'HIGH' : 'NONE',
+            approved: !(isInterior && hasIndoorOccupants),
           });
         }
       });

@@ -130,22 +130,6 @@ export const CameraController: React.FC = () => {
       // Keep camera safely above floor
       if (camY < py + 0.35) camY = py + 0.35;
 
-      // Camera collision prevention: clamp within current room bounds if indoors
-      const currentRoom = rooms.find((r) => r.id === controlledPerson.currentRoom);
-      if (currentRoom && controlledPerson.currentRoom !== 'lawn') {
-        const pad = 0.45;
-        camX = THREE.MathUtils.clamp(
-          camX,
-          currentRoom.bounds.min[0] + pad,
-          currentRoom.bounds.max[0] - pad
-        );
-        camZ = THREE.MathUtils.clamp(
-          camZ,
-          currentRoom.bounds.min[2] + pad,
-          currentRoom.bounds.max[2] - pad
-        );
-      }
-
       targetCamPos.set(camX, camY, camZ);
       targetLookAt.set(px, targetY, pz);
 

@@ -119,12 +119,15 @@ export class OfflineInterpreter {
       scope = targetRoom || (clean.includes('all') ? 'all' : 'unspecified');
       confidence = 0.85;
 
-      // Adversarial test detection: "turn off fridge", "cut main switch"
+      // Adversarial test detection: "turn off fridge", "cut main switch", "disable smoke detector"
       if (clean.includes('fridge') || clean.includes('refrigerator')) {
         constraints.push('fridge_cut_requested_invariant_must_block');
       }
       if (clean.includes('main switch') || clean.includes('breaker') || clean.includes('grid')) {
         constraints.push('main_breaker_cut_requested_critical_hazard');
+      }
+      if (clean.includes('smoke') || clean.includes('co') || clean.includes('leak') || clean.includes('siren') || clean.includes('sensor')) {
+        constraints.push('sensor_or_siren_disable_requested_invariant_must_block');
       }
     }
     // 9. Turn on / Illuminate
@@ -133,8 +136,15 @@ export class OfflineInterpreter {
       scope = targetRoom || 'all';
       confidence = 0.85;
 
+      if ((clean.includes('camera') || clean.includes('mic')) && (clean.includes('bedroom') || clean.includes('bathroom'))) {
+        constraints.push('camera_in_private_room_prohibited');
+      }
+      if (clean.includes('gas')) {
+        constraints.push('gas_activation_requires_occupant_presence');
+      }
+
       const words = clean.split(/\s+/);
-      const knownDeviceWords = ['light', 'lights', 'fan', 'fans', 'ac', 'tv', 'stove', 'heater', 'camera', 'fridge', 'plug', 'gate', 'door', 'all'];
+      const knownDeviceWords = ['light', 'lights', 'fan', 'fans', 'ac', 'tv', 'stove', 'heater', 'camera', 'fridge', 'plug', 'gate', 'door', 'gas', 'sensor', 'siren', 'all'];
       const hasKnownDevice = words.some((w) => knownDeviceWords.includes(w)) || targetRoom !== null;
       if (!hasKnownDevice) {
         confidence = 0.6;

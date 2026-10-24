@@ -32,14 +32,14 @@ export const LeftPanel: React.FC = () => {
       const grandpa = people.find((p) => p.name === 'Grandpa');
       if (grandpa) {
         grandpa.scriptedRoutine = 'stay_in_bathroom';
-        updatePersonPosition(grandpa.id, [-8.0, 0, -4.0], 0);
+        updatePersonPosition(grandpa.id, [-7.5, 0, -3.5], 0);
         updatePersonActivity(grandpa.id, 'bathing');
       }
     } else if (scenario === 'grandpa_bedroom') {
       const grandpa = people.find((p) => p.name === 'Grandpa');
       if (grandpa) {
         grandpa.scriptedRoutine = null;
-        updatePersonPosition(grandpa.id, [1.0, 0, -4.0], 0);
+        updatePersonPosition(grandpa.id, [1.0, 0, -3.2], 0);
         updatePersonActivity(grandpa.id, 'resting');
       }
     } else if (scenario === 'reset_all') {
@@ -47,7 +47,7 @@ export const LeftPanel: React.FC = () => {
         p.scriptedRoutine = null;
         if (p.name === 'You') updatePersonPosition(p.id, [1.0, 0, 4.0], 0);
         if (p.name === 'Grandpa') updatePersonPosition(p.id, [3.5, 0, 3.2], -Math.PI / 4);
-        if (p.name === 'Kid') updatePersonPosition(p.id, [10.0, 0, 4.5], Math.PI / 2);
+        if (p.name === 'Kid') updatePersonPosition(p.id, [10.0, 3.0, 4.5], Math.PI / 2);
         updatePersonActivity(p.id, 'idle');
       });
     }

@@ -437,4 +437,116 @@ describe('25+ Scenario Suite for Autonomous Safety Agent', () => {
     const nightFinding = findings.find((f) => f.ruleId === 'rule_perimeter_night');
     expect(nightFinding).toBeDefined();
   });
+
+  // 27. Heating appliance unattended (Rule 2)
+  it('Scenario 27: Unattended water heater running without occupants flags HIGH severity risk', () => {
+    const world = freshWorld();
+    // Water heater in bathroom is on, but bathroom has 0 occupants
+    const heater = world.devices.find((d) => d.id === 'water_heater')!;
+    heater.state.power = 'on';
+    world.people.forEach((p) => {
+      if (p.currentRoom === 'bathroom') p.currentRoom = 'hall';
+    });
+
+    const findings = PolicyEngine.evaluateSoftRisks([], [], INITIAL_RULES, {
+      devices: world.devices,
+      doors: world.doors,
+      people: world.people,
+      timeOfDay: 14.0,
+    });
+
+    const heatingFinding = findings.find((f) => f.ruleId === 'rule_heating_unattended');
+    expect(heatingFinding).toBeDefined();
+    expect(heatingFinding?.severity).toBe('HIGH');
+  });
+
+  // 28. Pet Protection (Rule 5)
+  it('Scenario 28: Cutting AC power while pet Buddy is in residence triggers pet protection risk', () => {
+    const world = freshWorld();
+    const cutAcStep = {
+      id: 'step_ac_off',
+      deviceId: 'bedroom_ac',
+      deviceName: 'Inverter Air Conditioner',
+      deviceType: 'ac',
+      room: 'bedroom',
+      action: 'turn_off',
+      targetState: { power: 'off' },
+      currentState: { power: 'on' },
+      reason: 'Turn off AC',
+      isEssential: false,
+      approved: true,
+    };
+
+    const findings = PolicyEngine.evaluateSoftRisks([cutAcStep], [], INITIAL_RULES, {
+      devices: world.devices,
+      doors: world.doors,
+      people: world.people,
+      timeOfDay: 14.0,
+    });
+
+    const petFinding = findings.find((f) => f.ruleId === 'rule_pet_protection');
+    expect(petFinding).toBeDefined();
+    expect(petFinding?.severity).toBe('HIGH');
+    expect(petFinding?.affectedPeople).toContain('Buddy');
+  });
+
+  // 29. Sleep-hour egress lighting (Rule 6)
+  it('Scenario 29: Extinguishing hall light while occupant is resting triggers sleep-hour egress risk', () => {
+    const world = freshWorld();
+    const cutHallLightStep = {
+      id: 'step_hall_light_off',
+      deviceId: 'hall_light',
+      deviceName: 'Main Hall Chandelier',
+      deviceType: 'light',
+      room: 'hall',
+      action: 'turn_off',
+      targetState: { power: 'off' },
+      currentState: { power: 'on' },
+      reason: 'Goodnight command',
+      isEssential: false,
+      approved: true,
+    };
+
+    const findings = PolicyEngine.evaluateSoftRisks([cutHallLightStep], [], INITIAL_RULES, {
+      devices: world.devices,
+      doors: world.doors,
+      people: world.people,
+      timeOfDay: 23.0,
+    });
+
+    const egressFinding = findings.find((f) => f.ruleId === 'rule_sleep_hour_egress_lighting');
+    expect(egressFinding).toBeDefined();
+    expect(egressFinding?.severity).toBe('MEDIUM');
+  });
+
+  // 30. Garage / Gate left open (Rule 7)
+  it('Scenario 30: Open garage door triggers perimeter_open finding', () => {
+    const world = freshWorld();
+    const garage = world.devices.find((d) => d.type === 'garage_door')!;
+    garage.state.open = true;
+
+    const findings = PolicyEngine.evaluateSoftRisks([], [], INITIAL_RULES, {
+      devices: world.devices,
+      doors: world.doors,
+      people: world.people,
+      timeOfDay: 12.0,
+    });
+
+    const openPortalFinding = findings.find((f) => f.ruleId === 'rule_garage_gate_open');
+    expect(openPortalFinding).toBeDefined();
+    expect(openPortalFinding?.severity).toBe('MEDIUM');
+  });
+
+  // 31. Lock all doors with occupants inside warns about interior locks
+  it('Scenario 31: "Lock all doors" while occupants are inside warns about interior doors', () => {
+    const world = freshWorld();
+    const intent = OfflineInterpreter.parse("Lock all doors", defaultSpeaker, world.rooms);
+    const plan = Planner.plan(intent, world);
+
+    // Interior doors should be flagged with HIGH risk severity
+    const interiorStep = plan.find((s) => s.room === 'bedroom' && s.action === 'lock');
+    expect(interiorStep).toBeDefined();
+    expect(interiorStep?.riskSeverity).toBe('HIGH');
+    expect(interiorStep?.approved).toBe(false);
+  });
 });
