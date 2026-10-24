@@ -239,7 +239,7 @@ Remember:
 - If a command is contradictory or dangerous (e.g. "turn off everything including life-support or fridge", "turn on pool filter with swimmer inside"), mark high risk constraints or ambiguities.
 - Never invent device-specific low-level commands. Derive the high-level intent.`;
 
-    const candidateModels = Array.from(new Set([modelName, 'gemini-2.5-flash-lite', 'gemini-1.5-flash']));
+    const candidateModels = Array.from(new Set([modelName, 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite']));
     let lastError = null;
     let parsedIntent = null;
 
