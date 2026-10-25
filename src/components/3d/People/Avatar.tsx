@@ -10,229 +10,6 @@ interface AvatarProps {
   isCurrentController: boolean;
 }
 
-interface ClownBodyProps {
-  person: PersonEntity;
-  leftArmRef: React.RefObject<THREE.Group>;
-  rightArmRef: React.RefObject<THREE.Group>;
-  leftLegRef: React.RefObject<THREE.Group>;
-  rightLegRef: React.RefObject<THREE.Group>;
-}
-
-const ClownBody: React.FC<ClownBodyProps> = ({
-  leftArmRef,
-  rightArmRef,
-  leftLegRef,
-  rightLegRef,
-}) => {
-  const balloonRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (balloonRef.current) {
-      balloonRef.current.position.y = 1.15 + Math.sin(state.clock.elapsedTime * 1.6) * 0.035;
-      balloonRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 1.2) * 0.05;
-    }
-  });
-
-  return (
-    <group scale={1.0}>
-      {/* 1. CLOWN HEAD & MAKEUP */}
-      <group position={[0, 1.45, 0]}>
-        {/* Porcelain white face paint */}
-        <mesh castShadow>
-          <sphereGeometry args={[0.19, 24, 24]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.3} />
-        </mesh>
-
-        {/* Big Puffy Wild Clown Afro Hair (Sides & Back) */}
-        <mesh position={[-0.18, 0.04, 0]} castShadow>
-          <sphereGeometry args={[0.13, 16, 16]} />
-          <meshStandardMaterial color="#f97316" roughness={0.9} />
-        </mesh>
-        <mesh position={[0.18, 0.04, 0]} castShadow>
-          <sphereGeometry args={[0.13, 16, 16]} />
-          <meshStandardMaterial color="#f97316" roughness={0.9} />
-        </mesh>
-        <mesh position={[0, 0.09, -0.12]} castShadow>
-          <sphereGeometry args={[0.13, 16, 16]} />
-          <meshStandardMaterial color="#ea580c" roughness={0.9} />
-        </mesh>
-
-        {/* Tall Festive Clown Party Cone Hat */}
-        <group position={[0, 0.22, 0]} rotation={[-0.08, 0, 0.05]}>
-          <mesh castShadow>
-            <coneGeometry args={[0.12, 0.36, 16]} />
-            <meshStandardMaterial color="#c026d3" roughness={0.4} />
-          </mesh>
-          <mesh position={[0, -0.06, 0]}>
-            <torusGeometry args={[0.095, 0.018, 12, 20]} />
-            <meshStandardMaterial color="#fbbf24" roughness={0.4} />
-          </mesh>
-          <mesh position={[0, 0.19, 0]} castShadow>
-            <sphereGeometry args={[0.045, 14, 14]} />
-            <meshStandardMaterial color="#eab308" roughness={0.8} />
-          </mesh>
-        </group>
-
-        {/* Iconic Glossy Red Clown Nose */}
-        <mesh position={[0, 0.01, 0.19]} castShadow>
-          <sphereGeometry args={[0.055, 18, 18]} />
-          <meshStandardMaterial color="#dc2626" roughness={0.15} metalness={0.1} />
-        </mesh>
-
-        {/* Painted Smiling Red Mouth */}
-        <mesh position={[0, -0.08, 0.17]} rotation={[0, 0, Math.PI]}>
-          <torusGeometry args={[0.065, 0.018, 12, 16, Math.PI]} />
-          <meshBasicMaterial color="#e11d48" />
-        </mesh>
-
-        {/* Painted Rosy Pink Cheeks */}
-        <mesh position={[-0.12, -0.02, 0.14]}>
-          <sphereGeometry args={[0.035, 12, 12]} />
-          <meshBasicMaterial color="#f43f5e" />
-        </mesh>
-        <mesh position={[0.12, -0.02, 0.14]}>
-          <sphereGeometry args={[0.035, 12, 12]} />
-          <meshBasicMaterial color="#f43f5e" />
-        </mesh>
-
-        {/* Diamond Blue Eye Makeup */}
-        <mesh position={[-0.07, 0.05, 0.17]} rotation={[Math.PI / 2, 0, Math.PI / 4]}>
-          <cylinderGeometry args={[0.024, 0.024, 0.006, 4]} />
-          <meshBasicMaterial color="#0284c7" />
-        </mesh>
-        <mesh position={[0.07, 0.05, 0.17]} rotation={[Math.PI / 2, 0, Math.PI / 4]}>
-          <cylinderGeometry args={[0.024, 0.024, 0.006, 4]} />
-          <meshBasicMaterial color="#0284c7" />
-        </mesh>
-
-        {/* Eyes / Pupils */}
-        <mesh position={[-0.07, 0.045, 0.175]}>
-          <sphereGeometry args={[0.016, 12, 12]} />
-          <meshBasicMaterial color="#0f172a" />
-        </mesh>
-        <mesh position={[0.07, 0.045, 0.175]}>
-          <sphereGeometry args={[0.016, 12, 12]} />
-          <meshBasicMaterial color="#0f172a" />
-        </mesh>
-      </group>
-
-      {/* 2. ACCORDION RUFFLED NECK COLLAR */}
-      <group position={[0, 1.28, 0]}>
-        <mesh castShadow>
-          <torusGeometry args={[0.22, 0.075, 14, 24]} />
-          <meshStandardMaterial color="#fde047" roughness={0.6} />
-        </mesh>
-        <mesh position={[0, -0.02, 0]}>
-          <torusGeometry args={[0.18, 0.045, 12, 20]} />
-          <meshStandardMaterial color="#f43f5e" roughness={0.6} />
-        </mesh>
-      </group>
-
-      {/* 3. BAGGY HARLEQUIN JUMPSUIT */}
-      <group position={[0, 0.95, 0]}>
-        <mesh position={[-0.09, 0, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.14, 0.13, 0.62, 16]} />
-          <meshStandardMaterial color="#06b6d4" roughness={0.5} />
-        </mesh>
-        <mesh position={[0.09, 0, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.14, 0.13, 0.62, 16]} />
-          <meshStandardMaterial color="#ec4899" roughness={0.5} />
-        </mesh>
-
-        {/* Pompom Buttons down chest */}
-        <mesh position={[0, 0.18, 0.16]} castShadow>
-          <sphereGeometry args={[0.038, 12, 12]} />
-          <meshStandardMaterial color="#eab308" roughness={0.7} />
-        </mesh>
-        <mesh position={[0, 0.02, 0.16]} castShadow>
-          <sphereGeometry args={[0.038, 12, 12]} />
-          <meshStandardMaterial color="#ef4444" roughness={0.7} />
-        </mesh>
-        <mesh position={[0, -0.14, 0.16]} castShadow>
-          <sphereGeometry args={[0.038, 12, 12]} />
-          <meshStandardMaterial color="#84cc16" roughness={0.7} />
-        </mesh>
-      </group>
-
-      {/* 4. ARMS & WHITE GLOVES */}
-      <group ref={leftArmRef} position={[-0.28, 1.15, 0]}>
-        <mesh position={[0, -0.22, 0]} castShadow>
-          <capsuleGeometry args={[0.075, 0.32, 12, 12]} />
-          <meshStandardMaterial color="#eab308" roughness={0.5} />
-        </mesh>
-        <mesh position={[0, -0.42, 0]} castShadow>
-          <sphereGeometry args={[0.09, 14, 14]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.4} />
-        </mesh>
-      </group>
-
-      <group ref={rightArmRef} position={[0.28, 1.15, 0]}>
-        <mesh position={[0, -0.22, 0]} castShadow>
-          <capsuleGeometry args={[0.075, 0.32, 12, 12]} />
-          <meshStandardMaterial color="#06b6d4" roughness={0.5} />
-        </mesh>
-        <mesh position={[0, -0.42, 0]} castShadow>
-          <sphereGeometry args={[0.09, 14, 14]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.4} />
-        </mesh>
-      </group>
-
-      {/* 5. FLOATING FESTIVE HELIUM BALLOON */}
-      <group position={[0.28, 0.73, 0]}>
-        <mesh position={[0.06, 0.65, 0.05]}>
-          <cylinderGeometry args={[0.003, 0.003, 0.9, 6]} />
-          <meshBasicMaterial color="#cbd5e1" />
-        </mesh>
-        <group ref={balloonRef} position={[0.06, 1.15, 0.05]}>
-          <mesh castShadow scale={[1, 1.25, 1]}>
-            <sphereGeometry args={[0.18, 20, 20]} />
-            <meshStandardMaterial color="#ef4444" roughness={0.2} metalness={0.1} />
-          </mesh>
-          <mesh position={[0, -0.19, 0]} rotation={[Math.PI, 0, 0]}>
-            <coneGeometry args={[0.035, 0.05, 8]} />
-            <meshStandardMaterial color="#dc2626" roughness={0.3} />
-          </mesh>
-        </group>
-      </group>
-
-      {/* 6. BAGGY LEGS & OVERSIZED BULBOUS CLOWN SHOES */}
-      <group ref={leftLegRef} position={[-0.12, 0.65, 0]}>
-        <mesh position={[0, -0.25, 0]} castShadow>
-          <capsuleGeometry args={[0.085, 0.45, 12, 12]} />
-          <meshStandardMaterial color="#ec4899" roughness={0.5} />
-        </mesh>
-        <group position={[0, -0.56, 0.12]}>
-          <mesh castShadow>
-            <boxGeometry args={[0.18, 0.12, 0.36]} />
-            <meshStandardMaterial color="#dc2626" roughness={0.6} />
-          </mesh>
-          <mesh position={[0, 0.02, 0.16]} castShadow>
-            <sphereGeometry args={[0.1, 14, 14]} />
-            <meshStandardMaterial color="#facc15" roughness={0.5} />
-          </mesh>
-        </group>
-      </group>
-
-      <group ref={rightLegRef} position={[0.12, 0.65, 0]}>
-        <mesh position={[0, -0.25, 0]} castShadow>
-          <capsuleGeometry args={[0.085, 0.45, 12, 12]} />
-          <meshStandardMaterial color="#06b6d4" roughness={0.5} />
-        </mesh>
-        <group position={[0, -0.56, 0.12]}>
-          <mesh castShadow>
-            <boxGeometry args={[0.18, 0.12, 0.36]} />
-            <meshStandardMaterial color="#dc2626" roughness={0.6} />
-          </mesh>
-          <mesh position={[0, 0.02, 0.16]} castShadow>
-            <sphereGeometry args={[0.1, 14, 14]} />
-            <meshStandardMaterial color="#facc15" roughness={0.5} />
-          </mesh>
-        </group>
-      </group>
-    </group>
-  );
-};
-
 const DogBody: React.FC<{ person: PersonEntity }> = ({ person }) => {
   const tailRef = useRef<THREE.Group>(null);
   const legFL = useRef<THREE.Group>(null);
@@ -363,15 +140,14 @@ export const Avatar: React.FC<AvatarProps> = ({ person, isCurrentController }) =
   const leftArmRef = useRef<THREE.Group>(null);
   const rightArmRef = useRef<THREE.Group>(null);
 
-  const isClown = person.id === 'person_sudharshini' || person.name.toLowerCase().includes('sudharshini');
-  const isDog = person.id === 'person_dog' || person.attributes.role === 'pet' || person.name.toLowerCase().includes('buddy');
+    const isDog = person.id === 'person_dog' || person.attributes.role === 'pet' || person.name.toLowerCase().includes('buddy');
 
   // In 3rd person view, keep character mesh visible at all times
   const isFirstPersonControlled = false;
 
   // Scale based on age group
   let scale = 1.0;
-  let bodyHeight = isClown ? 1.75 : isDog ? 0.75 : 1.65;
+  let bodyHeight = isDog ? 0.75 : 1.65;
   if (person.attributes.ageGroup === 'elderly') {
     scale = 0.95;
     bodyHeight = 1.55;
@@ -388,7 +164,7 @@ export const Avatar: React.FC<AvatarProps> = ({ person, isCurrentController }) =
     groupRef.current.rotation.y = person.rotationY;
 
     // Limb swing walk animation (clown stands completely still, dog has its own 4-leg trot)
-    const isMoving = !isClown && !isDog && person.activity === 'walking';
+    const isMoving = !isDog && person.activity === 'walking';
     const walkSpeed = person.attributes.mobility === 'reduced' ? 5.0 : 9.0;
     const walkSwing = isMoving ? Math.sin(state.clock.elapsedTime * walkSpeed) * 0.55 : 0;
 
@@ -424,7 +200,7 @@ export const Avatar: React.FC<AvatarProps> = ({ person, isCurrentController }) =
           <Billboard follow={true}>
             <Text
               fontSize={0.24}
-              color={isClown ? '#f43f5e' : isDog ? '#f59e0b' : isCurrentController ? '#38bdf8' : '#ffffff'}
+              color={isDog ? '#f59e0b' : isCurrentController ? '#38bdf8' : '#ffffff'}
               anchorX="center"
               anchorY="bottom"
               outlineWidth={0.02}
@@ -435,13 +211,13 @@ export const Avatar: React.FC<AvatarProps> = ({ person, isCurrentController }) =
             <Text
               position={[0, -0.15, 0]}
               fontSize={0.16}
-              color={isClown ? '#fbbf24' : isDog ? '#38bdf8' : '#94a3b8'}
+              color={isDog ? '#38bdf8' : '#94a3b8'}
               anchorX="center"
               anchorY="top"
               outlineWidth={0.015}
               outlineColor="#020617"
             >
-              {isClown ? '[Clown · Standing Still]' : isDog ? '[Dog · Roaming]' : `[${person.activity}]`}
+              {isDog ? '[Dog · Roaming]' : `[${person.activity}]`}
             </Text>
           </Billboard>
         </group>
@@ -449,15 +225,7 @@ export const Avatar: React.FC<AvatarProps> = ({ person, isCurrentController }) =
 
       {/* 3D CHARACTER MESH */}
       {!isFirstPersonControlled && (
-        isClown ? (
-          <ClownBody
-            person={person}
-            leftArmRef={leftArmRef}
-            rightArmRef={rightArmRef}
-            leftLegRef={leftLegRef}
-            rightLegRef={rightLegRef}
-          />
-        ) : isDog ? (
+        isDog ? (
           <DogBody person={person} />
         ) : (
           <group scale={scale}>

@@ -637,24 +637,6 @@ export const INITIAL_PEOPLE: PersonEntity[] = [
     idleTimer: 4,
   },
   {
-    id: 'person_sudharshini',
-    name: 'Sudharshini',
-    color: '#ec4899', // Clown Hot Pink
-    attributes: {
-      ageGroup: 'adult',
-      mobility: 'normal',
-      vulnerability: 0.1,
-      role: 'guest',
-    },
-    position: [2.5, 0, 9.4],
-    rotationY: Math.PI,
-    currentRoom: 'lawn',
-    activity: 'idle',
-    isControlled: false,
-    pathWaypoints: [],
-    idleTimer: 999999,
-  },
-  {
     id: 'person_dog',
     name: 'Buddy',
     color: '#d97706', // Warm Golden / Honey

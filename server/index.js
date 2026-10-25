@@ -372,7 +372,7 @@ You output GOALS and CONSTRAINTS, NOT hardcoded device IDs or direct switch acti
 The downstream Planner will derive actions from the Device Capability Schema.
 
 World Context:
-${worldSummary ? JSON.stringify(worldSummary) : 'Standard 8-zone residence (Main Hall, Bedroom, Bathroom, Kitchen, Garage, Terrace, Lawn, Swimming Pool). Inhabitants: You (adult), Grandpa (vulnerable/elderly), Kid, Sudharshini, Buddy (dog).'}
+${worldSummary ? JSON.stringify(worldSummary) : 'Standard 8-zone residence (Main Hall, Bedroom, Bathroom, Kitchen, Garage, Terrace, Lawn, Swimming Pool). Inhabitants: You (adult), Grandpa (vulnerable/elderly), Kid, Buddy (dog).'}
 
 Current Speaker: ${speaker}
 

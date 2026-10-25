@@ -45,7 +45,6 @@ const STATIC_OBSTACLES: ObstacleBox[] = [
   { minX: -6.4, maxX: -4.6, minZ: -7.4, maxZ: -5.6 }, // Bathroom Shower
   { minX: -9.5, maxX: -6.0, minZ: 9.8, maxZ: 14.5 }, // Garage Car
   { minX: -11.8, maxX: -10.8, minZ: 10.0, maxZ: 14.0 }, // Garage Workbench
-  { minX: 2.0, maxX: 3.0, minZ: 8.9, maxZ: 9.9 }, // Clown Sudharshini
   { minX: 13.7, maxX: 14.5, minZ: 13.1, maxZ: 14.1 }, // Pool Filter Pump Box
   // Front fence segments
   { minX: -14.0, maxX: -0.3, minZ: 19.6, maxZ: 20.2 },
