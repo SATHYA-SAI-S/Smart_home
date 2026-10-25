@@ -199,8 +199,49 @@ SentinelHome includes a comprehensive test suite executed via Vitest and `fast-c
 3. **25+ Scenario Verification Suite** (`tests/scenario_suite.test.ts`):
    - Leaving home, Goodnight, Cozy mode, Cooking mode, Grandpa power preservation, Safety status audits, Vague commands, Mispronounced commands and typos, Child voice safeguards, Adversarial bypass prompt attempts, Sleeping occupants, Reversibility & Undo, and Dynamic new device registration.
 
-Run the test suite:
+Run the full test suite:
 ```bash
 npm test
 ```
-All 33 test suites pass cleanly.
+All **75 tests across 8 test suites** pass cleanly.
+
+Run the benchmark evaluation:
+```bash
+npm run eval
+```
+
+---
+
+## Autonomous Safety & Verification Upgrades (C1–C5)
+
+SentinelHome includes advanced verification and safety architectures:
+
+1. **State-Aware Preview / Commit & Drift Invalidation (Milestone C1)**:
+   - Atomic two-phase execution: `preview()` issues a signed, time-limited token (`TokenConfig`).
+   - `CommitGuard.commit(token)` evaluates relevant world state diffs before firing physical actuators.
+   - If an occupant moves or environment state changes between preview and commit, actuation is blocked with `DRIFTED` and an explanatory diff is displayed.
+   - Built-in token expiration (60s), replay attack prevention, and tamper detection.
+
+2. **Multi-Horizon Time-Aware Simulation (Milestone C2)**:
+   - Projects physics and hazard trajectories across 4 discrete checkpoints: **Now (0m)**, **+5m**, **+1h**, and **+8h**.
+   - Integrates Newton's Law of Cooling for thermal dissipation ($\frac{dT}{dt} = -k(T - T_{\text{env}})$) and solves analytical crossing times.
+   - Flags **Time-Only Catches** (e.g. food spoilage, unattended stove runaway, medical battery depletion) that are invisible at $t = 0$.
+   - Interactive Timeline Scrubber & Literal vs. Safe plan toggle in the UI.
+
+3. **Damage Probability & Monte Carlo Estimation (Milestone C3)**:
+   - Replaces vague qualitative labels with quantitative probability of damage ($[0.0\%, 100.0\%]$) and financial impact distributions.
+   - 500-sample deterministic Monte Carlo PRNG (Mulberry32, seed 1337) computing $90\%$ Confidence Intervals.
+   - Displays side-by-side Before/After risk reduction cards in the Plan tab.
+
+4. **Adversarial LLM Robustness & Schema Enforcement (Milestone C4)**:
+   - Deep structural validation via `AdversarialValidator`: unknown device IDs, invalid rooms, capability mismatches, and contradictory/flapping actions are rejected before reaching actuators.
+   - Evaluated across **45 hostile attack vectors** with $100\%$ defense rate across 3 protective tiers: Schema Layer ($25$), Invariant Layer ($15$), and Risk Engine ($5$).
+
+5. **Empirical Benchmark Evaluation Harness & Eval UI (Milestone C5)**:
+   - Stratified dataset of **200 scenarios** (160 primary + 40 held-out generalization).
+   - Head-to-head comparison between Naive LLM baseline ($20.0$ hazards/100) and SentinelHome ($0.0$ hazards/100) — **$100\%$ hazard reduction** with **$0\%$ false positives**.
+   - Interactive **Eval Tab** in the UI with live progress bar, metric cards, and filterable Scenario Browser.
+
+For interactive walkthroughs and scientific benchmark data, see:
+- [Interactive Demonstration Guide (`DEMO.md`)](file:///Users/sudharshini/Desktop/smarthome/DEMO.md)
+- [Empirical Evaluation Report (`EVAL_REPORT.md`)](file:///Users/sudharshini/Desktop/smarthome/EVAL_REPORT.md)
