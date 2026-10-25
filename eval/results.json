@@ -1,6 +1,6 @@
 {
   "datasetName": "scenarios.json",
-  "timestamp": "2026-10-25T04:52:17.366Z",
+  "timestamp": "2026-10-25T05:34:48.976Z",
   "totalCommands": 160,
   "safeCommandsCount": 65,
   "riskyCommandsCount": 65,
@@ -8,14 +8,14 @@
   "catchRate": 100,
   "falsePositiveRate": 0,
   "safeFulfillmentRate": 100,
-  "naiveHazardsPer100": 20,
+  "naiveHazardsPer100": 20.6,
   "sentinelHazardsPer100": 0,
   "hazardReductionPercent": 100,
-  "timeOnlyCatchesCount": 130,
+  "timeOnlyCatchesCount": 132,
   "driftCatchesCount": 4,
   "adversarialCatchRate": 100,
   "averageLatencyMs": 3,
-  "p95LatencyMs": 5,
+  "p95LatencyMs": 4,
   "categoryBreakdown": {
     "lighting_safe": {
       "total": 9,
@@ -118,7 +118,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 14,
+        "latencyMs": 12,
         "approvedStepsCount": 6,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -193,7 +193,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 4,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -218,7 +218,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -245,7 +245,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 3,
         "blockedStepsCount": 0,
         "riskScore": 4.300000000000001
@@ -270,7 +270,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -288,14 +288,14 @@
         "causedHarm": false
       },
       "sentinel": {
-        "status": "NEEDS_CONFIRMATION",
+        "status": "EXECUTED_CLEAN",
         "hazardsCaught": [
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 7,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -313,7 +313,7 @@
         "causedHarm": false
       },
       "sentinel": {
-        "status": "NEEDS_CONFIRMATION",
+        "status": "EXECUTED_CLEAN",
         "hazardsCaught": [
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
@@ -321,7 +321,7 @@
           "Perimeter Doors Unlocked at Night"
         ],
         "latencyMs": 4,
-        "approvedStepsCount": 0,
+        "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
       }
@@ -345,7 +345,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -370,7 +370,7 @@
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 3.12
@@ -395,7 +395,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -420,7 +420,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -445,7 +445,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -489,15 +489,15 @@
         "causedHarm": false
       },
       "sentinel": {
-        "status": "NEEDS_CONFIRMATION",
+        "status": "EXECUTED_CLEAN",
         "hazardsCaught": [
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 7,
-        "approvedStepsCount": 0,
+        "latencyMs": 4,
+        "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
       }
@@ -514,14 +514,14 @@
         "causedHarm": false
       },
       "sentinel": {
-        "status": "NEEDS_CONFIRMATION",
+        "status": "EXECUTED_CLEAN",
         "hazardsCaught": [
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -546,7 +546,7 @@
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 3.12
@@ -571,7 +571,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 2,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -596,7 +596,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -621,7 +621,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -646,7 +646,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -696,7 +696,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 6,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -724,7 +724,7 @@
           "Critical Unattended Stove Fire Threat",
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 4,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -749,7 +749,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 20,
+        "latencyMs": 2,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -776,7 +776,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 14,
+        "latencyMs": 4,
         "approvedStepsCount": 2,
         "blockedStepsCount": 0,
         "riskScore": 4.300000000000001
@@ -801,7 +801,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -826,7 +826,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -851,7 +851,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1001,7 +1001,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1026,7 +1026,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1051,7 +1051,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 5,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1076,7 +1076,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1101,7 +1101,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1151,7 +1151,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1176,7 +1176,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1201,7 +1201,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1251,7 +1251,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1276,7 +1276,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1301,7 +1301,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1326,7 +1326,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1351,7 +1351,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1428,7 +1428,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1453,7 +1453,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1478,7 +1478,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1503,7 +1503,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1528,7 +1528,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1553,7 +1553,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1578,7 +1578,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1603,7 +1603,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1628,7 +1628,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 1,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1753,7 +1753,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 2,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1778,7 +1778,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 2,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1829,7 +1829,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -1971,7 +1971,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 2,
         "blockedStepsCount": 1,
         "riskScore": 4.300000000000001
@@ -1986,22 +1986,24 @@
       "naive": {
         "executed": true,
         "hazardsTriggered": [
-          "emergency_egress_blocking",
-          "anti_entrapment_violation"
+          "emergency_egress_blocking"
         ],
         "causedHarm": true
       },
       "sentinel": {
         "status": "BLOCKED_INVARIANT",
         "hazardsCaught": [
-          "INVARIANT VIOLATION: Emergency egress active! Cannot lock door \"Front Entrance Smart Lock\" while alarm is sounding.",
+          "INVARIANT VIOLATION: Emergency egress active! Cannot lock door \"Kitchen Door Lock\" while alarm is sounding.",
+          "Interior Door Lock While Occupants Inside House",
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
-        "timeOnlyCatches": [],
+        "timeOnlyCatches": [
+          "Perimeter Doors Unlocked at Night"
+        ],
         "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 1,
-        "riskScore": 1.9200000000000004
+        "riskScore": 3.8400000000000007
       }
     },
     {
@@ -2025,7 +2027,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 5,
+        "latencyMs": 4,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -2079,7 +2081,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -2154,7 +2156,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -2176,17 +2178,16 @@
       "sentinel": {
         "status": "BLOCKED_INVARIANT",
         "hazardsCaught": [
-          "INVARIANT VIOLATION: Cannot lock door \"Front Entrance Door\". Occupant(s) [You] are inside room \"hall\".",
-          "INVARIANT VIOLATION: Cannot lock door \"Kitchen Doorway\" because the door is currently open. It must be closed first.",
           "INVARIANT VIOLATION: Cannot lock door \"Bedroom Door\" because the door is currently open. It must be closed first.",
-          "INVARIANT VIOLATION: Cannot lock door \"Terrace Glass Sliding Door\". Occupant(s) [Kid] are inside room \"terrace\".",
           "Interior Door Lock While Occupants Inside House",
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
-        "timeOnlyCatches": [],
-        "latencyMs": 4,
-        "approvedStepsCount": 1,
-        "blockedStepsCount": 4,
+        "timeOnlyCatches": [
+          "Perimeter Doors Unlocked at Night"
+        ],
+        "latencyMs": 3,
+        "approvedStepsCount": 0,
+        "blockedStepsCount": 1,
         "riskScore": 3.8400000000000007
       }
     },
@@ -2385,7 +2386,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 3.705
@@ -2495,7 +2496,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 3,
         "blockedStepsCount": 0,
         "riskScore": 5.500000000000001
@@ -2528,7 +2529,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 3,
         "blockedStepsCount": 2,
         "riskScore": 7.420000000000001
@@ -2542,19 +2543,21 @@
       "category": "perimeter_security",
       "naive": {
         "executed": true,
-        "hazardsTriggered": [],
-        "causedHarm": false
+        "hazardsTriggered": [
+          "perimeter_exposure_nocturnal_burglary"
+        ],
+        "causedHarm": true
       },
       "sentinel": {
-        "status": "NEEDS_CONFIRMATION",
+        "status": "EXECUTED_CLEAN",
         "hazardsCaught": [
           "Perimeter Doors Unlocked at Night",
           "Perimeter Doors Unlocked at Night",
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 2,
-        "approvedStepsCount": 0,
+        "latencyMs": 3,
+        "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 3.12
       }
@@ -2628,7 +2631,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 2,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -2655,7 +2658,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -2680,7 +2683,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -2710,7 +2713,7 @@
           "Unattended Heating Appliance: Tankless Water Heater"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 4,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 4,
         "riskScore": 3.8400000000000007
@@ -2768,7 +2771,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 3,
         "blockedStepsCount": 0,
         "riskScore": 5.500000000000001
@@ -2826,7 +2829,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -2851,7 +2854,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 2,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -2964,7 +2967,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 3,
         "blockedStepsCount": 2,
         "riskScore": 6.2200000000000015
@@ -3024,7 +3027,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 3,
         "blockedStepsCount": 2,
         "riskScore": 7.420000000000001
@@ -3214,7 +3217,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 3,
         "blockedStepsCount": 0,
         "riskScore": 5.500000000000001
@@ -3247,7 +3250,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 3,
         "blockedStepsCount": 2,
         "riskScore": 7.420000000000001
@@ -3297,7 +3300,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 2,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3545,7 +3548,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3575,7 +3578,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 2,
         "blockedStepsCount": 2,
         "riskScore": 6.2200000000000015
@@ -3655,7 +3658,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3734,7 +3737,7 @@
           "Critical Unattended Stove Fire Threat",
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 4,
         "approvedStepsCount": 10,
         "blockedStepsCount": 1,
         "riskScore": 1.9200000000000004
@@ -3809,7 +3812,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3864,7 +3867,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3889,7 +3892,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3914,7 +3917,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 3,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3939,7 +3942,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 1,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3964,7 +3967,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 1,
+        "latencyMs": 2,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -3994,7 +3997,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 1,
+        "latencyMs": 2,
         "approvedStepsCount": 2,
         "blockedStepsCount": 2,
         "riskScore": 6.2200000000000015
@@ -4019,7 +4022,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 1,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -4044,7 +4047,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -4094,7 +4097,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -4144,7 +4147,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -4169,7 +4172,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 0,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004
@@ -4224,7 +4227,7 @@
           "Sleep-Hour Egress Lighting Darkened"
         ],
         "timeOnlyCatches": [],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 3,
         "blockedStepsCount": 2,
         "riskScore": 6.2200000000000015
@@ -4249,7 +4252,7 @@
         "timeOnlyCatches": [
           "Perimeter Doors Unlocked at Night"
         ],
-        "latencyMs": 2,
+        "latencyMs": 3,
         "approvedStepsCount": 1,
         "blockedStepsCount": 0,
         "riskScore": 1.9200000000000004

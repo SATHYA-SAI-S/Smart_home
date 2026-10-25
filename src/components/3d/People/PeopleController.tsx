@@ -99,12 +99,12 @@ export const PeopleController: React.FC = () => {
       }
 
       // 'F' or 'E' Key: Interact with nearest door
-      if (key === 'f' || (key === 'e' && cameraMode !== 'person')) {
-        const controlled = people.find((p) => p.id === selectedPersonId);
+      if (key === 'f' || key === 'e') {
+        const controlled = people.find((p) => p.id === selectedPersonId) || people[0];
         if (controlled) {
           const [px, , pz] = controlled.position;
           let nearestDoorId = '';
-          let nearestDist = 2.0;
+          let nearestDist = 3.0; // Comfortable interaction range
 
           doors.forEach((door) => {
             const dist = Math.hypot(door.position[0] - px, door.position[2] - pz);
@@ -235,16 +235,6 @@ export const PeopleController: React.FC = () => {
       } else if (px >= 8.7 && px <= 13.5 && pz >= 10.9 && pz <= 16.3) {
         floorHeight = -0.5; // Submerged in pool water!
       }
-
-      // Auto-open unlocked doors when the avatar approaches
-      doors.forEach((door) => {
-        if (!door.isOpen && !door.isLocked) {
-          const dist = Math.hypot(door.position[0] - px, door.position[2] - pz);
-          if (dist < 1.6) {
-            setDoorOpen(door.id, true);
-          }
-        }
-      });
 
       // Gravity & Jumping physics
       velocityY.current -= 15.0 * delta;

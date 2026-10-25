@@ -60,6 +60,10 @@ export class OfflineInterpreter {
     else if (clean.match(/\bfridges?\b|\brefrigerators?\b/)) detectedDevice = 'refrigerator';
     else if (clean.match(/\bheaters?\b|\bgeysers?\b/)) detectedDevice = 'water_heater';
     else if (clean.match(/\bmicrowaves?\b/)) detectedDevice = 'microwave';
+    else if (clean.includes('bedroom door') || (clean.includes('bedroom') && clean.includes('door'))) detectedDevice = 'bedroom_door_lock';
+    else if (clean.includes('bathroom door') || (clean.includes('bathroom') && clean.includes('door'))) detectedDevice = 'bathroom_door_lock';
+    else if (clean.includes('kitchen door') || (clean.includes('kitchen') && clean.includes('door'))) detectedDevice = 'kitchen_door_lock';
+    else if (clean.includes('terrace door') || (clean.includes('terrace') && clean.includes('door'))) detectedDevice = 'terrace_door_lock';
     else if (clean.includes('front') || clean.includes('main door') || clean.includes('entrance')) detectedDevice = 'main_door_lock';
     else if (clean.match(/\bgarages?\b/)) detectedDevice = 'garage_door';
     else if (clean.match(/\bgates?\b/)) detectedDevice = 'gate';
@@ -183,11 +187,21 @@ export class OfflineInterpreter {
         ambiguities.push(`Command "${raw}" mentions an unrecognized appliance or unknown device type.`);
       }
     }
-    // 11. Direct Lock / Unlock
+    // 11. Direct Door Open / Close (e.g. "close the bedroom door", "open bedroom door", "shut front door")
+    else if (
+      clean.match(/\b(open|close|shut)\b/) &&
+      (clean.includes('door') || clean.includes('gate') || clean.includes('garage') || detectedDevice?.includes('door') || detectedDevice === 'gate' || detectedDevice === 'garage_door')
+    ) {
+      const isClose = clean.match(/\b(close|shut)\b/);
+      goal = isClose ? 'close_door' : 'open_door';
+      scope = detectedDevice || (targetRoom ? `${targetRoom}_door_lock` : 'doors');
+      confidence = 0.95;
+    }
+    // 12. Direct Lock / Unlock
     else if (clean.match(/\b(lock|unlock)\b/)) {
       goal = clean.includes('unlock') ? 'unlock_doors' : 'lock_doors';
-      scope = detectedDevice || targetRoom || 'doors';
-      confidence = 0.88;
+      scope = detectedDevice || (targetRoom ? `${targetRoom}_door_lock` : 'doors');
+      confidence = 0.92;
     }
     // Fallback for vague or unknown utterances
     else {

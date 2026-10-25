@@ -148,32 +148,130 @@ export const PlanTab: React.FC = () => {
             </div>
 
             {/* Selected Checkpoint Environment Status */}
-            {activeCheckpoint && (
-              <div className="p-2 rounded-lg bg-black/30 border border-white/5 text-[10px] text-slate-300 font-mono space-y-1">
-                <div className="flex items-center justify-between text-[9px] text-slate-400">
-                  <span>Selected: <span className="text-white font-bold">{activeCheckpoint.label}</span></span>
-                  <span>Findings: <span className="text-amber-400 font-bold">{activeCheckpoint.findings.length}</span></span>
+            {activeCheckpoint && (() => {
+              const planTouchesFridge = displayedPlan.some((s) => s.deviceId.includes('fridge') || s.deviceId.includes('refrigerator') || s.deviceId.includes('breaker') || s.deviceId.includes('main'));
+              const planTouchesFan = displayedPlan.some((s) => s.deviceType === 'fan');
+              const planTouchesLight = displayedPlan.some((s) => s.deviceType === 'light');
+              const planTouchesClimate = displayedPlan.some((s) => s.deviceType === 'ac');
+              const planTouchesStove = displayedPlan.some((s) => s.deviceId.includes('stove') || s.deviceType === 'stove');
+              const planTouchesMedical = displayedPlan.some((s) => s.deviceId.includes('medical'));
+              const planTouchesDoors = displayedPlan.some((s) => s.deviceType === 'door_lock' || s.deviceType === 'garage_door' || s.deviceType === 'gate' || s.action === 'lock' || s.action === 'unlock' || s.action === 'close' || s.action === 'open');
+
+              return (
+                <div className="p-2 rounded-lg bg-black/30 border border-white/5 text-[10px] text-slate-300 font-mono space-y-1">
+                  <div className="flex items-center justify-between text-[9px] text-slate-400">
+                    <span>Selected: <span className="text-white font-bold">{activeCheckpoint.label}</span></span>
+                    <span>Findings: <span className="text-amber-400 font-bold">{activeCheckpoint.findings.length}</span></span>
+                  </div>
+
+                  {/* Refrigerator Telemetry - Only shown if command affects refrigeration or main power */}
+                  {planTouchesFridge && activeCheckpoint.environmentalValues.fridgeTempC !== undefined && (
+                    <div className="flex items-center justify-between text-[9px]">
+                      <span className="text-slate-400">Fridge Temp:</span>
+                      <span className={activeCheckpoint.environmentalValues.fridgeTempC >= 4.0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                        {activeCheckpoint.environmentalValues.fridgeTempC}°C {activeCheckpoint.environmentalValues.fridgeTempC >= 4.0 ? '(Spoilage Risk)' : '(Nominal)'}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Fan Telemetry - Shown if command affects fans */}
+                  {planTouchesFan && displayedPlan.filter((s) => s.deviceType === 'fan').map((s) => {
+                    const simDev = activeCheckpoint.simulatedDevices.find((d) => d.id === s.deviceId);
+                    const pwr = simDev?.state.power ?? s.targetState.power ?? 'off';
+                    return (
+                      <div key={s.deviceId} className="flex items-center justify-between text-[9px]">
+                        <span className="text-slate-400">{s.deviceName}:</span>
+                        <span className={pwr === 'on' ? 'text-sky-400 font-bold' : 'text-slate-400 font-medium'}>
+                          {pwr === 'on' ? 'Active Circulation' : 'Off (Airflow Idle)'}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Lighting Telemetry - Shown if command affects lights */}
+                  {planTouchesLight && displayedPlan.filter((s) => s.deviceType === 'light').slice(0, 3).map((s) => {
+                    const simDev = activeCheckpoint.simulatedDevices.find((d) => d.id === s.deviceId);
+                    const pwr = simDev?.state.power ?? s.targetState.power ?? 'off';
+                    return (
+                      <div key={s.deviceId} className="flex items-center justify-between text-[9px]">
+                        <span className="text-slate-400">{s.deviceName}:</span>
+                        <span className={pwr === 'on' ? 'text-amber-300 font-bold' : 'text-slate-500'}>
+                          {pwr === 'on' ? 'Illuminated' : 'Extinguished'}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Climate Telemetry - Shown if command affects AC / climate */}
+                  {planTouchesClimate && Object.entries(activeCheckpoint.environmentalValues.roomTempsC || {}).slice(0, 2).map(([rId, temp]) => (
+                    <div key={rId} className="flex items-center justify-between text-[9px]">
+                      <span className="text-slate-400">Room Temp ({rId}):</span>
+                      <span className={temp >= 26.0 ? 'text-amber-400 font-bold' : 'text-emerald-400'}>
+                        {temp.toFixed(1)}°C
+                      </span>
+                    </div>
+                  ))}
+
+                  {/* Stove Telemetry - Shown if command affects cooktop */}
+                  {planTouchesStove && activeCheckpoint.environmentalValues.stoveUnattendedMinutes !== undefined && (
+                    <div className="flex items-center justify-between text-[9px]">
+                      <span className="text-slate-400">Stove Unattended:</span>
+                      <span className={activeCheckpoint.environmentalValues.stoveUnattendedMinutes >= 20 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                        {activeCheckpoint.environmentalValues.stoveUnattendedMinutes} min
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Medical Telemetry - Shown if command affects medical device */}
+                  {planTouchesMedical && activeCheckpoint.environmentalValues.medicalBatteryPercent !== undefined && (
+                    <div className="flex items-center justify-between text-[9px]">
+                      <span className="text-slate-400">Medical Backup:</span>
+                      <span className={activeCheckpoint.environmentalValues.medicalBatteryPercent <= 20 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                        {activeCheckpoint.environmentalValues.medicalBatteryPercent}%
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Doors / Perimeter Telemetry - Shown if command affects doors */}
+                  {planTouchesDoors && displayedPlan.filter((s) => s.deviceType === 'door_lock' || s.deviceType === 'garage_door' || s.deviceType === 'gate').map((s) => {
+                    const simDoor = activeCheckpoint.simulatedDoors.find((d) => d.lockDeviceId === s.deviceId || d.id === s.deviceId);
+                    const stateStr = simDoor
+                      ? `${simDoor.isOpen ? 'Open' : 'Closed'} / ${simDoor.isLocked ? 'Locked' : 'Unlocked'}`
+                      : `${s.action.toUpperCase()}`;
+                    return (
+                      <div key={s.deviceId} className="flex items-center justify-between text-[9px]">
+                        <span className="text-slate-400">{s.deviceName}:</span>
+                        <span className="text-sky-300 font-bold">{stateStr}</span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Generic Fallback for other commands */}
+                  {!planTouchesFridge && !planTouchesFan && !planTouchesLight && !planTouchesClimate && !planTouchesStove && !planTouchesMedical && !planTouchesDoors && displayedPlan.slice(0, 3).map((s) => {
+                    const simDev = activeCheckpoint.simulatedDevices.find((d) => d.id === s.deviceId);
+                    return (
+                      <div key={s.deviceId} className="flex items-center justify-between text-[9px]">
+                        <span className="text-slate-400">{s.deviceName}:</span>
+                        <span className="text-white font-medium">
+                          {simDev?.state.power ?? s.action}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {activeCheckpoint.timeOnlyHazards.length > 0 && (
+                    <div className="mt-1 pt-1 border-t border-white/5 text-[9px] text-rose-300 font-sans">
+                      <span className="font-bold">⚠️ Triggered at this checkpoint:</span>
+                      <ul className="list-disc list-inside mt-0.5 text-[9px] text-rose-200">
+                        {activeCheckpoint.timeOnlyHazards.map((h, i) => (
+                          <li key={i}>{h}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                {activeCheckpoint.environmentalValues.fridgeTempC !== undefined && (
-                  <div className="flex items-center justify-between text-[9px]">
-                    <span className="text-slate-400">Fridge Temp:</span>
-                    <span className={activeCheckpoint.environmentalValues.fridgeTempC >= 4.0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
-                      {activeCheckpoint.environmentalValues.fridgeTempC}°C {activeCheckpoint.environmentalValues.fridgeTempC >= 4.0 ? '(Spoilage Risk)' : ''}
-                    </span>
-                  </div>
-                )}
-                {activeCheckpoint.timeOnlyHazards.length > 0 && (
-                  <div className="mt-1 pt-1 border-t border-white/5 text-[9px] text-rose-300 font-sans">
-                    <span className="font-bold">⚠️ Triggered at this checkpoint:</span>
-                    <ul className="list-disc list-inside mt-0.5 text-[9px] text-rose-200">
-                      {activeCheckpoint.timeOnlyHazards.map((h, i) => (
-                        <li key={i}>{h}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
+              );
+            })()}
           </div>
         )}
 

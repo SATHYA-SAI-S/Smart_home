@@ -281,10 +281,22 @@ export class Planner {
         if (!schema) return;
 
         const isLockGoal =
-          intent.goal.includes('lock') ||
+          (intent.goal.includes('lock') && !intent.goal.includes('unlock')) ||
           intent.goal === 'secure_perimeter' ||
           intent.goal === 'lock_perimeter' ||
           intent.goal === 'lock_all_doors';
+
+        const isUnlockGoal =
+          intent.goal === 'unlock_doors' ||
+          intent.goal === 'unlock';
+
+        const isOpenGoal =
+          intent.goal === 'open_door' ||
+          intent.goal === 'open';
+
+        const isCloseGoal =
+          intent.goal === 'close_door' ||
+          intent.goal === 'close';
 
         const isOffGoal =
           intent.goal.includes('turn_off') ||
@@ -335,6 +347,52 @@ export class Planner {
             currentState: { ...dev.state },
             reason: `User requested illumination/activation for ${dev.name}.`,
             isEssential: dev.criticality === 'ESSENTIAL',
+            approved: true,
+          });
+        } else if (isOpenGoal && (dev.type === 'door_lock' || dev.type === 'garage_door' || dev.type === 'gate')) {
+          if (dev.state.open !== true) {
+            rawSteps.push({
+              id: `step_${dev.id}_open`,
+              deviceId: dev.id,
+              deviceName: dev.name,
+              deviceType: dev.type,
+              room: dev.room,
+              action: 'open',
+              targetState: { open: true },
+              currentState: { ...dev.state },
+              reason: `User requested opening ${dev.name}.`,
+              isEssential: false,
+              approved: true,
+            });
+          }
+        } else if (isCloseGoal && (dev.type === 'door_lock' || dev.type === 'garage_door' || dev.type === 'gate')) {
+          if (dev.state.open !== false) {
+            rawSteps.push({
+              id: `step_${dev.id}_close`,
+              deviceId: dev.id,
+              deviceName: dev.name,
+              deviceType: dev.type,
+              room: dev.room,
+              action: 'close',
+              targetState: { open: false },
+              currentState: { ...dev.state },
+              reason: `User requested closing ${dev.name}.`,
+              isEssential: false,
+              approved: true,
+            });
+          }
+        } else if (isUnlockGoal && dev.type === 'door_lock' && dev.state.locked) {
+          rawSteps.push({
+            id: `step_${dev.id}_unlock`,
+            deviceId: dev.id,
+            deviceName: dev.name,
+            deviceType: dev.type,
+            room: dev.room,
+            action: 'unlock',
+            targetState: { locked: false },
+            currentState: { ...dev.state },
+            reason: `User requested unlock for ${dev.name}.`,
+            isEssential: false,
             approved: true,
           });
         } else if (isLockGoal && dev.type === 'door_lock' && !dev.state.locked) {

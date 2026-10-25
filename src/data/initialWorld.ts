@@ -245,7 +245,7 @@ export const INITIAL_DEVICES: DeviceEntity[] = [
     room: 'bedroom',
     position: [3.2, 1.2, -0.2],
     criticality: 'SAFETY',
-    state: { locked: false },
+    state: { locked: false, open: true },
     powerConsumptionWatts: 2,
   },
 
@@ -585,30 +585,9 @@ export const INITIAL_PEOPLE: PersonEntity[] = [
     currentRoom: 'hall',
     activity: 'resting',
     isControlled: false,
-    pathWaypoints: [
-      [3.5, 0, 3.2],   // Hall seating
-      [1.0, 0, 3.5],   // Living room rug
-      [3.2, 0, 1.5],   // Approach bedroom doorway
-      [3.2, 0, 0.0],   // Pass through bedroom doorway
-      [3.2, 0, -1.8],  // Bedroom aisle
-      [1.0, 0, -3.2],  // Bedroom resting area
-      [-2.0, 0, -2.0], // Approach ensuite door
-      [-4.0, 0, -2.0], // Pass through ensuite door
-      [-7.5, 0, -2.0], // Inside bathroom
-      [-4.0, 0, -2.0], // Return through ensuite door
-      [0.0, 0, -2.0],  // Bedroom aisle
-      [3.2, 0, -1.8],  // Towards bedroom door
-      [3.2, 0, 0.0],   // Pass through bedroom door to hall
-      [3.2, 0, 1.5],   // Hall doorway approach
-      [-2.0, 0, 4.0],  // Approach kitchen door
-      [-4.0, 0, 4.0],  // Pass through kitchen doorway
-      [-7.0, 0, 4.0],  // Kitchen area
-      [-4.0, 0, 4.0],  // Return to hall
-      [1.0, 0, 3.5],   // Living room
-      [3.5, 0, 3.2],   // Hall seating
-    ],
+    pathWaypoints: [],
     targetWaypointIndex: 0,
-    idleTimer: 6,
+    idleTimer: 999999,
   },
   {
     id: 'person_kid',

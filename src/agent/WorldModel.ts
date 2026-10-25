@@ -218,6 +218,20 @@ const defaultSchemas: DeviceSchema[] = [
         hazards: ['perimeter_unsecured_at_night'],
         reversibility: 'IMMEDIATE',
       },
+      open: {
+        name: 'Open Door',
+        description: 'Swings open the interior or exterior door leaf',
+        preconditions: { locked: false },
+        effects: { open: true },
+        reversibility: 'IMMEDIATE',
+      },
+      close: {
+        name: 'Close Door',
+        description: 'Swings closed the interior or exterior door leaf',
+        preconditions: {},
+        effects: { open: false },
+        reversibility: 'IMMEDIATE',
+      },
     },
   },
   {

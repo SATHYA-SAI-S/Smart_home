@@ -55,8 +55,8 @@ export const Furniture: React.FC = () => {
       {/* MAIN HALL FURNITURE                                       */}
       {/* ========================================================= */}
       <group position={[1.0, 0, 4.0]}>
-        {/* Soft living room area rug */}
-        <mesh position={[0, 0.01, 0]} receiveShadow>
+        {/* Soft living room area rug (flat on floor) */}
+        <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[4.8, 4.0]} />
           <meshStandardMaterial color="#cbd5e1" roughness={0.9} />
         </mesh>
@@ -250,8 +250,8 @@ export const Furniture: React.FC = () => {
       {/* BEDROOM FURNITURE                                         */}
       {/* ========================================================= */}
       <group position={[1.0, 0, -4.0]}>
-        {/* Soft bedroom rug */}
-        <mesh position={[0, 0.01, -0.4]} receiveShadow>
+        {/* Soft bedroom rug (flat on floor) */}
+        <mesh position={[0, 0.01, -0.4]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[3.8, 3.4]} />
           <meshStandardMaterial color="#e0e7ff" roughness={0.9} />
         </mesh>
