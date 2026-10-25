@@ -272,7 +272,8 @@ export class Planner {
           (intent.scope === 'locks' && dev.type === 'door_lock') ||
           (intent.scope === 'exterior' && (dev.room === 'lawn' || dev.id.includes('main_door') || dev.id.includes('garage') || dev.id.includes('gate'))) ||
           (intent.scope === 'sensors' && (dev.type === 'safety_sensor' || dev.type === 'siren')) ||
-          (intent.scope === 'appliances' && (dev.type === 'stove' || dev.type === 'water_heater' || dev.type === 'refrigerator' || dev.type === 'tv' || dev.type === 'fan'));
+          (intent.scope === 'microwave' && (dev.id.includes('microwave') || dev.name.toLowerCase().includes('microwave'))) ||
+          (intent.scope === 'appliances' && (dev.type === 'stove' || dev.type === 'water_heater' || dev.type === 'refrigerator' || dev.type === 'tv' || dev.type === 'fan' || dev.id.includes('microwave')));
 
         if (!matchesScope) return;
 

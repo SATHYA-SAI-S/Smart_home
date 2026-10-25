@@ -59,6 +59,7 @@ export class OfflineInterpreter {
     else if (clean.match(/\bstoves?\b|\bovens?\b|\bcooktop\b/)) detectedDevice = 'stove';
     else if (clean.match(/\bfridges?\b|\brefrigerators?\b/)) detectedDevice = 'refrigerator';
     else if (clean.match(/\bheaters?\b|\bgeysers?\b/)) detectedDevice = 'water_heater';
+    else if (clean.match(/\bmicrowaves?\b/)) detectedDevice = 'microwave';
     else if (clean.includes('front') || clean.includes('main door') || clean.includes('entrance')) detectedDevice = 'main_door_lock';
     else if (clean.match(/\bgarages?\b/)) detectedDevice = 'garage_door';
     else if (clean.match(/\bgates?\b/)) detectedDevice = 'gate';
@@ -144,7 +145,7 @@ export class OfflineInterpreter {
       (clean.match(/\b(off)\b/) && (detectedDevice !== null || targetRoom !== null || clean.includes('all')))
     ) {
       goal = 'turn_off_devices';
-      scope = targetRoom || detectedDevice || (clean.includes('all') ? 'all' : 'unspecified');
+      scope = (detectedDevice === 'microwave') ? 'microwave' : (targetRoom || detectedDevice || (clean.includes('all') ? 'all' : 'unspecified'));
       confidence = detectedDevice || targetRoom ? 0.95 : 0.85;
 
       // Adversarial test detection: "turn off fridge", "cut main switch", "disable smoke detector"
@@ -164,7 +165,7 @@ export class OfflineInterpreter {
       (clean.match(/\b(on)\b/) && (detectedDevice !== null || targetRoom !== null))
     ) {
       goal = 'turn_on_devices';
-      scope = targetRoom || detectedDevice || 'all';
+      scope = (detectedDevice === 'microwave') ? 'microwave' : (targetRoom || detectedDevice || 'all');
       confidence = detectedDevice || targetRoom ? 0.95 : 0.85;
 
       if ((clean.includes('camera') || clean.includes('mic')) && (clean.includes('bedroom') || clean.includes('bathroom'))) {
@@ -175,7 +176,7 @@ export class OfflineInterpreter {
       }
 
       const words = clean.split(/\s+/);
-      const knownDeviceWords = ['light', 'lights', 'fan', 'fans', 'ac', 'tv', 'stove', 'heater', 'camera', 'fridge', 'plug', 'gate', 'door', 'gas', 'sensor', 'siren', 'filter', 'filtering', 'pool', 'pump', 'all'];
+      const knownDeviceWords = ['light', 'lights', 'fan', 'fans', 'ac', 'tv', 'stove', 'heater', 'camera', 'fridge', 'plug', 'gate', 'door', 'gas', 'sensor', 'siren', 'filter', 'filtering', 'pool', 'pump', 'microwave', 'all'];
       const hasKnownDevice = words.some((w) => knownDeviceWords.includes(w)) || targetRoom !== null || detectedDevice !== null;
       if (!hasKnownDevice) {
         confidence = 0.6;

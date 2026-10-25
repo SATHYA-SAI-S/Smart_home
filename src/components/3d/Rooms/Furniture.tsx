@@ -6,7 +6,7 @@ export const Furniture: React.FC = () => {
   const devices = useWorldStore((state) => state.devices);
   const tvDevice = devices.find((d) => d.id === 'hall_tv');
   const stoveDevice = devices.find((d) => d.id === 'kitchen_stove');
-  const fridgeDevice = devices.find((d) => d.id === 'kitchen_fridge');
+  const fridgeDevice = devices.find((d) => d.id === 'kitchen_refrigerator' || d.id === 'kitchen_fridge');
 
   const isTvOn = tvDevice?.state.power === 'on';
   const isStoveOn = stoveDevice?.state.power === 'on';
