@@ -53,16 +53,16 @@ export class OfflineInterpreter {
     // Detect device keywords in utterance with word boundaries
     let detectedDevice: string | null = null;
     if (clean.match(/\bfans?\b/)) detectedDevice = 'fan';
-    else if (clean.match(/\blights?\b|\blamps?\b|\blite\b/)) detectedDevice = 'light';
+    else if (clean.match(/\blights?\b|\blightings?\b|\blamps?\b|\blite\b/)) detectedDevice = 'light';
     else if (clean.match(/\bac\b/) || clean.includes('air conditioner') || clean.includes('cooling')) detectedDevice = 'ac';
     else if (clean.match(/\btv\b/) || clean.includes('television')) detectedDevice = 'tv';
     else if (clean.match(/\bstoves?\b|\bovens?\b|\bcooktop\b/)) detectedDevice = 'stove';
     else if (clean.match(/\bfridges?\b|\brefrigerators?\b/)) detectedDevice = 'refrigerator';
     else if (clean.match(/\bheaters?\b|\bgeysers?\b/)) detectedDevice = 'water_heater';
-    else if (clean.match(/\bpools?\b|\bfilters?\b|\bpumps?\b/)) detectedDevice = 'pool_filter';
-    else if (clean.match(/\bdoors?\b|\blocks?\b/)) detectedDevice = 'doors';
+    else if (clean.includes('front') || clean.includes('main door') || clean.includes('entrance')) detectedDevice = 'main_door_lock';
     else if (clean.match(/\bgarages?\b/)) detectedDevice = 'garage_door';
     else if (clean.match(/\bgates?\b/)) detectedDevice = 'gate';
+    else if (clean.match(/\bdoors?\b|\blocks?\b/)) detectedDevice = 'doors';
 
     // 1. Leaving Home / Out / Departure (with typo tolerance)
     if (
@@ -185,7 +185,7 @@ export class OfflineInterpreter {
     // 11. Direct Lock / Unlock
     else if (clean.match(/\b(lock|unlock)\b/)) {
       goal = clean.includes('unlock') ? 'unlock_doors' : 'lock_doors';
-      scope = targetRoom || 'doors';
+      scope = detectedDevice || targetRoom || 'doors';
       confidence = 0.88;
     }
     // Fallback for vague or unknown utterances

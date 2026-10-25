@@ -6,7 +6,8 @@ import {
   ShieldCheck, 
   History, 
   ChevronRight, 
-  ChevronLeft 
+  ChevronLeft,
+  BarChart3
 } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { ChatTab } from './ChatTab';
@@ -14,6 +15,7 @@ import { PlanTab } from './PlanTab';
 import { WorldTab } from './WorldTab';
 import { RulesTab } from './RulesTab';
 import { AuditTab } from './AuditTab';
+import { EvalTab } from './EvalTab';
 
 export const RightPanel: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -28,6 +30,7 @@ export const RightPanel: React.FC = () => {
     { id: 'world', label: 'World & Risks', icon: <Globe size={13} /> },
     { id: 'rules', label: 'Rules', icon: <ShieldCheck size={13} /> },
     { id: 'audit', label: 'Audit', icon: <History size={13} /> },
+    { id: 'eval', label: 'Eval', icon: <BarChart3 size={13} /> },
   ];
 
   return (
@@ -80,6 +83,7 @@ export const RightPanel: React.FC = () => {
           {activeTab === 'world' && <WorldTab />}
           {activeTab === 'rules' && <RulesTab />}
           {activeTab === 'audit' && <AuditTab />}
+          {activeTab === 'eval' && <EvalTab />}
         </div>
       </div>
     </div>

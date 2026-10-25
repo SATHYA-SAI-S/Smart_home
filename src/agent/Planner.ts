@@ -297,6 +297,17 @@ export class Planner {
           intent.goal === 'power_on' ||
           intent.goal === 'activate';
 
+        // When scope is a generic room, safety infrastructure (sensors, gas valves) is not an ambient controllable appliance
+        const isGenericRoomScope = dev.room === intent.scope;
+        if (isGenericRoomScope) {
+          if (dev.type === 'safety_sensor' || dev.type === 'siren' || dev.type === 'gas_valve') {
+            return;
+          }
+          if (dev.criticality === 'ESSENTIAL' && isOffGoal) {
+            return;
+          }
+        }
+
         if (isOffGoal && dev.state.power === 'on') {
           rawSteps.push({
             id: `step_${dev.id}_off`,
