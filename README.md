@@ -1,5 +1,7 @@
 # SentinelHome: Autonomous 3D Smart-Home Simulator & Safety Engine
 
+> 🌐 **Live Interactive 3D Simulator:** [https://sathya-sai-s.github.io/Smart_home/](https://sathya-sai-s.github.io/Smart_home/)
+
 SentinelHome is a sandboxed, browser-based 3D smart-home simulator powered by an autonomous contextual AI Agent.
 Unlike standard voice assistants (which simply map rigid triggers to device toggles), SentinelHome uses a formal **World Model**, a multi-stage **Reasoning & Policy Pipeline**, and a **Predictive Simulation Sandbox** to assess real-world context, foresee cascading consequences, enforce safety & invariant policies, propose safer plans, request approval, and execute with closed-loop verification.
 
